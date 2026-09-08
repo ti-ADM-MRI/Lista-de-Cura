@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= include('styles'); ?>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Pedidos de Cura - Shabat <span id="shabatDate">Carregando...</span></h1>
+      
+      <div id="currentTime" style="text-align: center; color: #666; margin-bottom: 10px; font-size: 12px;"></div>
+      
+      <!-- Aviso de formulário fechado -->
+      <div id="warningBox" class="warning-box" style="display: none;">
+        <p id="warningMessage"></p>
+      </div>
+      
+      <!-- Formulário -->
+      <div id="formContainer" class="form-container" style="display: none;">
+        <div id="namesContainer">
+          <!-- Campos serão adicionados dinamicamente -->
+        </div>
+        
+        <div class="button-group">
+          <button type="button" class="btn-add" onclick="addNameField()">
+            (+) Adicionar Nome
+          </button>
+          <button type="button" class="btn-submit" onclick="submitForm()">
+            Enviar
+          </button>
+        </div>
+        
+        <div id="message" class="message"></div>
+        
+        <div id="results" class="results" style="display:none;">
+          <h3>Links Gerados:</h3>
+          <p><strong>Planilha:</strong> <a id="spreadsheetLink" href="#" target="_blank">Clique aqui</a></p>
+          <p><strong>Apresentação:</strong> <a id="presentationLink" href="#" target="_blank">Clique aqui</a></p>
+        </div>
+      </div>
+    </div>
+    
+    <?!= include('js'); ?>
+  </body>
+</html>
