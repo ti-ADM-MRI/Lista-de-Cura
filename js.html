@@ -1,0 +1,181 @@
+<script>
+  var nameCount = 0;
+  var currentShabatDate = '';
+  var isFormOpen = false;
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM carregado');
+    
+    google.script.run
+      .withSuccessHandler(function(status) {
+        console.log('Status:', status);
+        
+        currentShabatDate = status.shabatDate;
+        isFormOpen = status.isOpen;
+        
+        document.getElementById('shabatDate').textContent = status.shabatDate;
+        document.getElementById('currentTime').textContent = status.currentTime;
+        
+        if (status.showWarning) {
+          document.getElementById('warningMessage').textContent = status.message;
+          document.getElementById('warningBox').style.display = 'block';
+          document.getElementById('formContainer').style.display = 'none';
+        } else {
+          document.getElementById('warningBox').style.display = 'none';
+          document.getElementById('formContainer').style.display = 'block';
+          
+          for (var i = 0; i < 6; i++) {
+            addNameField();
+          }
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error('Erro:', error);
+        currentShabatDate = '05/09/2026';
+        document.getElementById('shabatDate').textContent = currentShabatDate;
+        document.getElementById('formContainer').style.display = 'block';
+        
+        for (var i = 0; i < 6; i++) {
+          addNameField();
+        }
+      })
+      .checkFormStatus();
+  });
+  
+  function addNameField() {
+    nameCount++;
+    var container = document.getElementById('namesContainer');
+    
+    if (!container) {
+      console.error('Container não encontrado');
+      return;
+    }
+    
+    var div = document.createElement('div');
+    div.className = 'name-field';
+    div.id = 'nameField_' + nameCount;
+    
+    var label = document.createElement('label');
+    label.textContent = 'Nome Completo';
+    
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'name_' + nameCount;
+    input.className = 'name-input';
+    input.placeholder = 'Digite o nome completo';
+    
+    var removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn-remove';
+    removeBtn.textContent = '(-)';
+    removeBtn.onclick = function() {
+      removeNameField(div);
+    };
+    
+    div.appendChild(label);
+    div.appendChild(input);
+    div.appendChild(removeBtn);
+    container.appendChild(div);
+  }
+  
+  function removeNameField(element) {
+    var fields = document.querySelectorAll('.name-field');
+    if (fields.length > 1) {
+      element.remove();
+    } else {
+      alert('É necessário manter pelo menos um campo de nome.');
+    }
+  }
+  
+  function clearForm() {
+    // Limpa todos os campos de input
+    var inputs = document.querySelectorAll('.name-input');
+    inputs.forEach(function(input) {
+      input.value = '';
+    });
+    
+    // Remove campos extras, mantendo apenas 6
+    var fields = document.querySelectorAll('.name-field');
+    while (fields.length > 6) {
+      fields[fields.length - 1].remove();
+      fields = document.querySelectorAll('.name-field');
+    }
+    
+    // Esconde resultados
+    document.getElementById('results').style.display = 'none';
+    
+    console.log('Formulário limpo');
+  }
+  
+  function submitForm() {
+    if (!isFormOpen) {
+      showMessage('Formulário está fechado no momento.', 'error');
+      return;
+    }
+    
+    console.log('Enviando formulário...');
+    
+    var inputs = document.querySelectorAll('.name-input');
+    var names = [];
+    
+    inputs.forEach(function(input) {
+      if (input.value.trim() !== '') {
+        names.push(input.value.trim());
+      }
+    });
+    
+    console.log('Nomes coletados:', names);
+    
+    if (names.length === 0) {
+      showMessage('Por favor, preencha pelo menos um nome.', 'error');
+      return;
+    }
+    
+    showMessage('Processando...', 'info');
+    
+    google.script.run
+      .withSuccessHandler(function(response) {
+        console.log('Resposta:', response);
+        
+        if (response.success) {
+          // Monta mensagem detalhada
+          var msg = response.spreadsheet.message;
+          if (response.spreadsheet.duplicates > 0) {
+            msg += ' (' + response.spreadsheet.duplicates + ' nome(s) duplicado(s) ignorado(s))';
+          }
+          
+          showMessage(msg, 'success');
+          
+          // Mostra links
+          document.getElementById('spreadsheetLink').href = response.spreadsheet.spreadsheetUrl;
+          document.getElementById('presentationLink').href = response.presentation.presentationUrl;
+          document.getElementById('results').style.display = 'block';
+          
+          // Limpa o formulário após 2 segundos
+          setTimeout(function() {
+            clearForm();
+          }, 2000);
+        } else {
+          showMessage('Erro: ' + response.error, 'error');
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error('Erro:', error);
+        showMessage('Erro ao processar: ' + error.message, 'error');
+      })
+      .processForm(names, currentShabatDate);
+  }
+  
+  function showMessage(text, type) {
+    var messageDiv = document.getElementById('message');
+    if (messageDiv) {
+      messageDiv.textContent = text;
+      messageDiv.className = 'message ' + type;
+      
+      setTimeout(function() {
+        messageDiv.textContent = '';
+        messageDiv.className = 'message';
+      }, 5000);
+    }
+  }
+</script>
