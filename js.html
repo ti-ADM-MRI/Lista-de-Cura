@@ -261,4 +261,429 @@ function regenerateSlides() {
     msgDiv.style.color = type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460';
     setTimeout(function() { msgDiv.style.display = 'none'; }, 5000);
   }
+
+function generateDocx() {
+  showDevMessage('Gerando documento Word...', 'info');
+  
+  google.script.run
+    .withSuccessHandler(function(data) {
+      if (data.success === false) {
+        showDevMessage('Erro: ' + data.error, 'error');
+        return;
+      }
+      
+      // Cria HTML formatado para Word
+      var html = generateWordHtml(data);
+      
+      // Converte HTML para Blob e faz download
+      var blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'Pedidos_de_Cura_Shabat_' + currentShabatDate.replace(/\//g, '-') + '.doc';
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      showDevMessage('✅ Documento Word gerado! ' + data.totalNomes + ' nomes', 'success');
+    })
+    .withFailureHandler(function(error) {
+      showDevMessage('Erro: ' + error.message, 'error');
+    })
+    .exportNamesAsJSON(currentShabatDate);
+}
+
+function generateWordHtml(data) {
+  var nomes = data.nomes;
+  var shabatDate = data.shabatDate;
+  
+  // Organiza nomes em colunas (4 colunas × 32 nomes = 128 por página)
+  var nomesPorPagina = 128;
+  var nomesPorColuna = 32;
+  var numColunas = 4;
+  var totalPaginas = Math.ceil(nomes.length / nomesPorPagina);
+  
+  var html = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head>
+      <meta charset='utf-8'>
+      <title>Pedidos de Cura - Shabat ${shabatDate}</title>
+      <style>
+        @page {
+          size: A4 landscape;
+          margin: 2cm;
+        }
+        body {
+          font-family: 'Trebuchet MS', Arial, sans-serif;
+          font-size: 10pt;
+          color: #555555;
+        }
+        .titulo {
+          font-size: 18pt;
+          font-weight: bold;
+          color: #1a73e8;
+          text-align: center;
+          margin-bottom: 20pt;
+          font-family: 'Trebuchet MS', Arial, sans-serif;
+        }
+        .pagina {
+          page-break-after: always;
+          margin-bottom: 30pt;
+        }
+        .pagina:last-child {
+          page-break-after: auto;
+        }
+        .tabela-nomes {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .tabela-nomes td {
+          vertical-align: top;
+          padding: 2pt 5pt;
+          width: 25%;
+          font-family: 'Trebuchet MS', Arial, sans-serif;
+          font-size: 10pt;
+          color: #555555;
+        }
+        .nome {
+          margin: 3pt 0;
+          line-height: 1.2;
+        }
+        .footer {
+          text-align: center;
+          font-style: italic;
+          font-size: 9pt;
+          color: #666666;
+          margin-top: 30pt;
+          font-family: 'Trebuchet MS', Arial, sans-serif;
+        }
+      </style>
+    </head>
+    <body>
+  `;
+  
+  // Gera páginas
+  for (var pagina = 0; pagina < totalPaginas; pagina++) {
+    var startIndex = pagina * nomesPorPagina;
+    var endIndex = Math.min(startIndex + nomesPorPagina, nomes.length);
+    var nomesPagina = nomes.slice(startIndex, endIndex);
+    
+    html += '<div class="pagina">';
+    html += '<div class="titulo">Pedidos de Cura - Shabat ' + shabatDate + '</div>';
+    html += '<table class="tabela-nomes"><tr>';
+    
+    // Cria 4 colunas
+    for (var col = 0; col < numColunas; col++) {
+      html += '<td>';
+      
+      // Pega nomes desta coluna
+      for (var row = 0; row < nomesPorColuna; row++) {
+        var nameIndex = (row * numColunas) + col;
+        if (nameIndex < nomesPagina.length) {
+          html += '<div class="nome">' + nomesPagina[nameIndex].nome + '</div>';
+        }
+      }
+      
+      html += '</td>';
+    }
+    
+    html += '</tr></table>';
+    
+    // Footer apenas na última página
+    if (pagina === totalPaginas - 1) {
+      html += '<div class="footer">...e o Ponto de Estudos da Torah no Brasil e no Mundo.</div>';
+    }
+    
+    html += '</div>';
+  }
+  
+  html += '</body></html>';
+  
+  return html;
+}
+
+function generateProjectDoc() {
+  showDevMessage('Gerando documentação do projeto...', 'info');
+  
+  var html = generateProjectDocumentationHtml();
+  
+  // Cria Blob e faz download
+  var blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'Projeto_Pedidos_de_Cura_Documentacao.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  showDevMessage('✅ Documentação gerada com sucesso!', 'success');
+}
+
+function generateProjectDocumentationHtml() {
+  var currentDate = new Date().toLocaleString('pt-BR');
+  
+  var html = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head>
+      <meta charset='utf-8'>
+      <title>Documentação do Projeto - Pedidos de Cura</title>
+      <style>
+        @page {
+          size: A4;
+          margin: 2.5cm;
+        }
+        body {
+          font-family: 'Arial', sans-serif;
+          font-size: 11pt;
+          line-height: 1.5;
+          color: #333;
+        }
+        h1 {
+          font-size: 20pt;
+          color: #1a73e8;
+          text-align: center;
+          border-bottom: 3px solid #1a73e8;
+          padding-bottom: 10pt;
+          margin-bottom: 30pt;
+        }
+        h2 {
+          font-size: 16pt;
+          color: #2c6aa8;
+          border-left: 5px solid #2c6aa8;
+          padding-left: 10pt;
+          margin-top: 30pt;
+          margin-bottom: 15pt;
+          background-color: #f0f7ff;
+          padding: 8pt;
+        }
+        h3 {
+          font-size: 13pt;
+          color: #357abd;
+          margin-top: 20pt;
+          margin-bottom: 10pt;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 15pt 0;
+          font-size: 10pt;
+        }
+        th {
+          background-color: #1a73e8;
+          color: white;
+          padding: 8pt;
+          text-align: left;
+          border: 1px solid #0d5a9e;
+        }
+        td {
+          padding: 6pt;
+          border: 1px solid #ddd;
+          vertical-align: top;
+        }
+        tr:nth-child(even) {
+          background-color: #f9f9f9;
+        }
+        .status-ok {
+          color: #28a745;
+          font-weight: bold;
+        }
+        .section {
+          margin-bottom: 30pt;
+          page-break-inside: avoid;
+        }
+        .header-info {
+          background-color: #e8f4fc;
+          padding: 15pt;
+          border-radius: 5pt;
+          margin-bottom: 30pt;
+          border-left: 5px solid #1a73e8;
+        }
+        .footer {
+          margin-top: 50pt;
+          text-align: center;
+          font-size: 9pt;
+          color: #666;
+          border-top: 1px solid #ddd;
+          padding-top: 10pt;
+        }
+        ul {
+          margin: 10pt 0;
+          padding-left: 20pt;
+        }
+        li {
+          margin: 5pt 0;
+        }
+        .highlight {
+          background-color: #fff3cd;
+          padding: 2pt 5pt;
+          border-radius: 3pt;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>📋 DOCUMENTAÇÃO DO PROJETO<br>Pedidos de Cura - Shabat</h1>
+      
+      <div class="header-info">
+        <strong>Data de Geração:</strong> ${currentDate}<br>
+        <strong>Versão:</strong> 1.0<br>
+        <strong>Status:</strong> <span class="status-ok">✅ EM PRODUÇÃO</span>
+      </div>
+      
+      <div class="section">
+        <h2> 1. FORMULÁRIO PRINCIPAL</h2>
+        <table>
+          <tr><th style="width: 5%;">#</th><th style="width: 60%;">Funcionalidade</th><th style="width: 10%;">Status</th></tr>
+          <tr><td>1.1</td><td>Título dinâmico: "Pedidos de Cura - Shabat DD/MM/AAAA"</td><td class="status-ok">✅</td></tr>
+          <tr><td>1.2</td><td>Exibição da data/hora atual</td><td class="status-ok">✅</td></tr>
+          <tr><td>1.3</td><td>Campos dinâmicos de nome (botão "+" para adicionar)</td><td class="status-ok">✅</td></tr>
+          <tr><td>1.4</td><td>Botão "(-)" para remover campos</td><td class="status-ok">✅</td></tr>
+          <tr><td>1.5</td><td>Mínimo de 1 campo obrigatório</td><td class="status-ok">✅</td></tr>
+          <tr><td>1.6</td><td>Botão "Enviar" processa e salva</td><td class="status-ok">✅</td></tr>
+          <tr><td>1.7</td><td>Limpeza automática do formulário após envio (2s)</td><td class="status-ok">✅</td></tr>
+          <tr><td>1.8</td><td>Mensagens de sucesso/erro/info</td><td class="status-ok">✅</td></tr>
+        </table>
+      </div>
+      
+      <div class="section">
+        <h2>📊 2. PLANILHA GOOGLE SHEETS</h2>
+        <table>
+          <tr><th style="width: 5%;">#</th><th style="width: 60%;">Funcionalidade</th><th style="width: 10%;">Status</th></tr>
+          <tr><td>2.1</td><td>Criação automática: "Pedidos de Cura - Shabat DD/MM/AAAA"</td><td class="status-ok">✅</td></tr>
+          <tr><td>2.2</td><td>Aba "Pedidos" criada automaticamente</td><td class="status-ok">✅</td></tr>
+          <tr><td>2.3</td><td>Cabeçalho "Nome Completo" estilizado</td><td class="status-ok">✅</td></tr>
+          <tr><td>2.4</td><td><strong>32 nomes por coluna</strong> (A2:A33, B2:B33, etc.)</td><td class="status-ok">✅</td></tr>
+          <tr><td>2.5</td><td><strong>Acrescenta</strong> nomes (não apaga existentes)</td><td class="status-ok">✅</td></tr>
+          <tr><td>2.6</td><td>Largura de colunas configurada (250px)</td><td class="status-ok">✅</td></tr>
+          <tr><td>2.7</td><td>Retry logic (3 tentativas) ao salvar</td><td class="status-ok">✅</td></tr>
+        </table>
+      </div>
+      
+      <div class="section">
+        <h2>🛡️ 3. VALIDAÇÃO E ANTI-DUPLICIDADE</h2>
+        <table>
+          <tr><th style="width: 5%;">#</th><th style="width: 60%;">Funcionalidade</th><th style="width: 10%;">Status</th></tr>
+          <tr><td>3.1</td><td>Normalização de nomes (minúsculas, sem acentos)</td><td class="status-ok">✅</td></tr>
+          <tr><td>3.2</td><td>Remove artigos/preposições (dos, das, de, do, da)</td><td class="status-ok">✅</td></tr>
+          <tr><td>3.3</td><td>Detecta duplicatas (ex: "Samuka Lins dos Angels" = "samuka lin Angels")</td><td class="status-ok">✅</td></tr>
+          <tr><td>3.4</td><td>Ignora nomes duplicados ao salvar</td><td class="status-ok">✅</td></tr>
+          <tr><td>3.5</td><td>Sanitização contra injeção de código</td><td class="status-ok">✅</td></tr>
+          <tr><td>3.6</td><td>Validação de tamanho (3 a 100 caracteres)</td><td class="status-ok">✅</td></tr>
+          <tr><td>3.7</td><td>Mensagem informa quantos duplicados foram ignorados</td><td class="status-ok">✅</td></tr>
+        </table>
+      </div>
+      
+      <div class="section">
+        <h2>⏰ 4. CONTROLE DE HORÁRIO (Regras de Negócio)</h2>
+        <table>
+          <tr><th style="width: 5%;">#</th><th style="width: 60%;">Funcionalidade</th><th style="width: 10%;">Status</th></tr>
+          <tr><td>4.1</td><td><strong>Abre</strong>: Quarta-feira às 00:01 (2 dias antes do sábado)</td><td class="status-ok">✅</td></tr>
+          <tr><td>4.2</td><td><strong>Fecha</strong>: Sábado às 13:00</td><td class="status-ok">✅</td></tr>
+          <tr><td>4.3</td><td><strong>Preserva dados</strong>: Até segunda-feira 16:00</td><td class="status-ok">✅</td></tr>
+          <tr><td>4.4</td><td>Mensagem de aviso quando fechado</td><td class="status-ok">✅</td></tr>
+          <tr><td>4.5</td><td>Informa próxima data de abertura</td><td class="status-ok">✅</td></tr>
+          <tr><td>4.6</td><td>Cálculo automático do próximo sábado</td><td class="status-ok">✅</td></tr>
+          <tr><td>4.7</td><td>Cálculo automático da próxima quarta-feira</td><td class="status-ok">✅</td></tr>
+        </table>
+      </div>
+      
+      <div class="section">
+        <h2>🎨 5. APRESENTAÇÃO GOOGLE SLIDES</h2>
+        <table>
+          <tr><th style="width: 5%;">#</th><th style="width: 60%;">Funcionalidade</th><th style="width: 10%;">Status</th></tr>
+          <tr><td>5.1</td><td>Criação automática de slides</td><td class="status-ok">✅</td></tr>
+          <tr><td>5.2</td><td><strong>128 nomes por slide</strong> (4 colunas × 32 nomes)</td><td class="status-ok">✅</td></tr>
+          <tr><td>5.3</td><td>Slides adicionais automáticos se > 128 nomes</td><td class="status-ok">✅</td></tr>
+          <tr><td>5.4</td><td>Fundo azul decorativo</td><td class="status-ok">✅</td></tr>
+          <tr><td>5.5</td><td>Faixas decorativas à direita</td><td class="status-ok">✅</td></tr>
+          <tr><td>5.6</td><td>Card branco centralizado</td><td class="status-ok">✅</td></tr>
+          <tr><td>5.7</td><td>Título "Pedidos de Cura - Shabat DD/MM/AAAA" em azul</td><td class="status-ok">✅</td></tr>
+          <tr><td>5.8</td><td>Nomes em 4 colunas organizadas</td><td class="status-ok">✅</td></tr>
+          <tr><td>5.9</td><td>Fonte <strong>Trebuchet MS 10pt</strong> nos nomes</td><td class="status-ok">✅</td></tr>
+          <tr><td>5.10</td><td>Footer no último slide: "...e o Ponto de Estudos da Torah no Brasil e no Mundo."</td><td class="status-ok">✅</td></tr>
+          <tr><td>5.11</td><td>Reutiliza primeiro slide (evita erro removeSlide)</td><td class="status-ok">✅</td></tr>
+        </table>
+      </div>
+      
+      <div class="section">
+        <h2>🔐 6. PAINEL DEV (Exclusivo para Desenvolvedor)</h2>
+        <table>
+          <tr><th style="width: 5%;">#</th><th style="width: 60%;">Funcionalidade</th><th style="width: 10%;">Status</th></tr>
+          <tr><td>6.1</td><td>Botão secreto ⚙️ no canto inferior direito</td><td class="status-ok">✅</td></tr>
+          <tr><td>6.2</td><td>Acesso restrito por email (ysamrocha@gmail.com, administrativa@remanescentedeisrael.com)</td><td class="status-ok">✅</td></tr>
+          <tr><td>6.3</td><td>Modo desenvolvedor libera acesso fora do horário</td><td class="status-ok">✅</td></tr>
+          <tr><td>6.4</td><td>Exibe estatísticas: total de nomes, slides, última atualização</td><td class="status-ok">✅</td></tr>
+          <tr><td>6.5</td><td><strong>Download Planilha XLSX</strong> (abre planilha para download manual)</td><td class="status-ok">✅</td></tr>
+          <tr><td>6.6</td><td><strong>Exportar JSON</strong> (baixa arquivo .json com todos os nomes)</td><td class="status-ok">✅</td></tr>
+          <tr><td>6.7</td><td><strong>Regenerar Slides</strong> (sem popup de confirmação)</td><td class="status-ok">✅</td></tr>
+          <tr><td>6.8</td><td><strong>Download PPTX automático</strong> após regenerar slides</td><td class="status-ok">✅</td></tr>
+          <tr><td>6.9</td><td><strong>Gerar Word (.doc)</strong> - Lista de nomes formatada em 4 colunas</td><td class="status-ok">✅</td></tr>
+          <tr><td>6.10</td><td>Botão "Fechar" painel</td><td class="status-ok">✅</td></tr>
+        </table>
+      </div>
+      
+      <div class="section">
+        <h2> 7. CORREÇÕES TÉCNICAS IMPLEMENTADAS</h2>
+        <table>
+          <tr><th style="width: 5%;">#</th><th style="width: 90%;">Correção</th><th style="width: 5%;">Status</th></tr>
+          <tr><td>7.1</td><td>Filtro por MIME type (ignora apresentações, pega só planilhas)</td><td class="status-ok">✅</td></tr>
+          <tr><td>7.2</td><td>Correção do erro removeSlide is not a function</td><td class="status-ok">✅</td></tr>
+          <tr><td>7.3</td><td>Correção do erro Illegal spreadsheet id or key</td><td class="status-ok">✅</td></tr>
+          <tr><td>7.4</td><td>Correção do erro setBorder is not a function</td><td class="status-ok">✅</td></tr>
+          <tr><td>7.5</td><td>Correção do erro setAlignment is not a function</td><td class="status-ok">✅</td></tr>
+          <tr><td>7.6</td><td>Correção do erro ROUNDED_RECTANGLE is not valid</td><td class="status-ok">✅</td></tr>
+          <tr><td>7.7</td><td>Correção do erro PageSize.WIDE is undefined</td><td class="status-ok">✅</td></tr>
+          <tr><td>7.8</td><td>Correção da sobreposição de nomes (shapes individuais → 1 shape por coluna)</td><td class="status-ok">✅</td></tr>
+          <tr><td>7.9</td><td>Função getValidSpreadsheet() robusta com retry</td><td class="status-ok">✅</td></tr>
+          <tr><td>7.10</td><td>Logs detalhados para debug</td><td class="status-ok">✅</td></tr>
+        </table>
+      </div>
+      
+      <div class="section">
+        <h2>📁 8. ARQUIVOS DO PROJETO</h2>
+        <table>
+          <tr><th>Arquivo</th><th>Função</th></tr>
+          <tr><td><code>listaCurags.gs</code></td><td>Código do servidor (Google Apps Script)</td></tr>
+          <tr><td><code>listaCura.html</code></td><td>HTML principal da interface</td></tr>
+          <tr><td><code>js.html</code></td><td>JavaScript do cliente</td></tr>
+          <tr><td><code>styles.html</code></td><td>CSS de estilização</td></tr>
+        </table>
+      </div>
+      
+      <div class="section">
+        <h2> RESUMO GERAL</h2>
+        <div style="background-color: #d4edda; padding: 15pt; border-radius: 5pt; border-left: 5px solid #28a745;">
+          <h3 style="margin-top: 0; color: #155724;">✅ TOTAL: 38 FUNCIONALIDADES IMPLEMENTADAS E OPERACIONAIS</h3>
+          <ul>
+            <li><strong>Formulário Principal:</strong> 8 funcionalidades</li>
+            <li><strong>Planilha Google Sheets:</strong> 7 funcionalidades</li>
+            <li><strong>Validação e Anti-Duplicidade:</strong> 7 funcionalidades</li>
+            <li><strong>Controle de Horário:</strong> 7 funcionalidades</li>
+            <li><strong>Apresentação Google Slides:</strong> 11 funcionalidades</li>
+            <li><strong>Painel DEV:</strong> 10 funcionalidades</li>
+            <li><strong>Correções Técnicas:</strong> 10 correções</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="section">
+        <h2> PENDÊNCIAS IDENTIFICADAS (para retomada futura)</h2>
+        <ul>
+          <li>Ajuste fino do layout dos slides - Card branco precisa cobrir melhor a 4ª coluna</li>
+          <li>Centralização perfeita do card branco com margens iguais</li>
+          <li>Possível melhoria: Criar apenas 1 apresentação e atualizá-la (em vez de criar nova a cada vez)</li>
+          <li>Teste em produção com múltiplos usuários simultâneos</li>
+        </ul>
+      </div>
+      
+      <div class="footer">
+        <strong>Projeto: Pedidos de Cura - Shabat</strong><br>
+        Desenvolvido com Google Apps Script<br>
+        Status: <span class="highlight">EM PRODUÇÃO</span> | Última atualização: ${currentDate}<br>
+        <em>Todos os direitos reservados</em>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  return html;
+}
 </script>
