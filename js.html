@@ -4,15 +4,10 @@
   var isFormOpen = false;
   
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM carregado');
-    
     google.script.run
       .withSuccessHandler(function(status) {
-        console.log('Status:', status);
-        
         currentShabatDate = status.shabatDate;
         isFormOpen = status.isOpen;
-        
         document.getElementById('shabatDate').textContent = status.shabatDate;
         document.getElementById('currentTime').textContent = status.currentTime;
         
@@ -23,21 +18,14 @@
         } else {
           document.getElementById('warningBox').style.display = 'none';
           document.getElementById('formContainer').style.display = 'block';
-          
-          for (var i = 0; i < 6; i++) {
-            addNameField();
-          }
+          for (var i = 0; i < 6; i++) addNameField();
         }
       })
       .withFailureHandler(function(error) {
-        console.error('Erro:', error);
         currentShabatDate = '05/09/2026';
         document.getElementById('shabatDate').textContent = currentShabatDate;
         document.getElementById('formContainer').style.display = 'block';
-        
-        for (var i = 0; i < 6; i++) {
-          addNameField();
-        }
+        for (var i = 0; i < 6; i++) addNameField();
       })
       .checkFormStatus();
   });
@@ -45,11 +33,7 @@
   function addNameField() {
     nameCount++;
     var container = document.getElementById('namesContainer');
-    
-    if (!container) {
-      console.error('Container não encontrado');
-      return;
-    }
+    if (!container) return;
     
     var div = document.createElement('div');
     div.className = 'name-field';
@@ -68,9 +52,7 @@
     removeBtn.type = 'button';
     removeBtn.className = 'btn-remove';
     removeBtn.textContent = '(-)';
-    removeBtn.onclick = function() {
-      removeNameField(div);
-    };
+    removeBtn.onclick = function() { removeNameField(div); };
     
     div.appendChild(label);
     div.appendChild(input);
@@ -88,23 +70,15 @@
   }
   
   function clearForm() {
-    // Limpa todos os campos de input
     var inputs = document.querySelectorAll('.name-input');
-    inputs.forEach(function(input) {
-      input.value = '';
-    });
+    inputs.forEach(function(input) { input.value = ''; });
     
-    // Remove campos extras, mantendo apenas 6
     var fields = document.querySelectorAll('.name-field');
     while (fields.length > 6) {
       fields[fields.length - 1].remove();
       fields = document.querySelectorAll('.name-field');
     }
-    
-    // Esconde resultados
     document.getElementById('results').style.display = 'none';
-    
-    console.log('Formulário limpo');
   }
   
   function submitForm() {
@@ -113,18 +87,11 @@
       return;
     }
     
-    console.log('Enviando formulário...');
-    
     var inputs = document.querySelectorAll('.name-input');
     var names = [];
-    
     inputs.forEach(function(input) {
-      if (input.value.trim() !== '') {
-        names.push(input.value.trim());
-      }
+      if (input.value.trim() !== '') names.push(input.value.trim());
     });
-    
-    console.log('Nomes coletados:', names);
     
     if (names.length === 0) {
       showMessage('Por favor, preencha pelo menos um nome.', 'error');
@@ -135,32 +102,18 @@
     
     google.script.run
       .withSuccessHandler(function(response) {
-        console.log('Resposta:', response);
-        
         if (response.success) {
-          // Monta mensagem detalhada
           var msg = response.spreadsheet.message;
-          if (response.spreadsheet.duplicates > 0) {
-            msg += ' (' + response.spreadsheet.duplicates + ' nome(s) duplicado(s) ignorado(s))';
-          }
-          
           showMessage(msg, 'success');
-          
-          // Mostra links
           document.getElementById('spreadsheetLink').href = response.spreadsheet.spreadsheetUrl;
           document.getElementById('presentationLink').href = response.presentation.presentationUrl;
           document.getElementById('results').style.display = 'block';
-          
-          // Limpa o formulário após 2 segundos
-          setTimeout(function() {
-            clearForm();
-          }, 2000);
+          setTimeout(function() { clearForm(); }, 2000);
         } else {
           showMessage('Erro: ' + response.error, 'error');
         }
       })
       .withFailureHandler(function(error) {
-        console.error('Erro:', error);
         showMessage('Erro ao processar: ' + error.message, 'error');
       })
       .processForm(names, currentShabatDate);
@@ -171,11 +124,129 @@
     if (messageDiv) {
       messageDiv.textContent = text;
       messageDiv.className = 'message ' + type;
-      
       setTimeout(function() {
         messageDiv.textContent = '';
         messageDiv.className = 'message';
       }, 5000);
     }
+  }
+
+  // === FUNÇÕES DO PAINEL DEV ===
+  function toggleDevPanel() {
+    var panel = document.getElementById('devPanel');
+    if (panel.style.display === 'none' || panel.style.display === '') {
+      loadDevStats();
+      panel.style.display = 'block';
+    } else {
+      panel.style.display = 'none';
+    }
+  }
+
+  function closeDevPanel() {
+    document.getElementById('devPanel').style.display = 'none';
+  }
+
+  function loadDevStats() {
+    document.getElementById('devStats').innerHTML = '<p style="color: #856404;">Carregando...</p>';
+    
+    google.script.run
+      .withSuccessHandler(function(stats) {
+        if (!stats) {
+          document.getElementById('devStats').innerHTML = '<p style="color: red;">Erro: resposta nula</p>';
+          return;
+        }
+        
+        if (stats.success) {
+          var html = '<p style="margin: 5px 0;"><strong>Planilha:</strong> ' + (stats.spreadsheetName || 'N/A') + '</p>';
+          html += '<p style="margin: 5px 0;"><strong>Nomes:</strong> ' + stats.totalNames + '</p>';
+          html += '<p style="margin: 5px 0;"><strong>Slides:</strong> ' + stats.totalSlides + '</p>';
+          html += '<p style="margin: 5px 0;"><strong>Atualizado:</strong> ' + stats.lastModified + '</p>';
+          document.getElementById('devStats').innerHTML = html;
+        } else {
+          if (stats.notCreated) {
+            document.getElementById('devStats').innerHTML = '<p style="color: #856404; background: #fff3cd; padding: 10px; border-radius: 5px;">️ ' + stats.error + '</p>';
+          } else {
+            document.getElementById('devStats').innerHTML = '<p style="color: red;">Erro: ' + stats.error + '</p>';
+          }
+        }
+      })
+      .withFailureHandler(function(error) {
+        document.getElementById('devStats').innerHTML = '<p style="color: red;">Erro de conexão: ' + error.message + '</p>';
+      })
+      .getDeveloperStats(currentShabatDate);
+  }
+
+function downloadSpreadsheet() {
+  showDevMessage('Abrindo planilha...', 'info');
+  google.script.run
+    .withSuccessHandler(function(stats) {
+      if (stats && stats.success) {
+        // Abre a planilha em nova aba (usuário faz download manualmente)
+        window.open(stats.spreadsheetUrl, '_blank');
+        showDevMessage('Planilha aberta! Use Arquivo → Download → Excel', 'success');
+      } else {
+        showDevMessage('Erro: ' + (stats ? stats.error : 'Resposta nula'), 'error');
+      }
+    })
+    .withFailureHandler(function(error) {
+      showDevMessage('Erro: ' + error.message, 'error');
+    })
+    .getDeveloperStats(currentShabatDate);
+}
+
+function regenerateSlides() {
+  if (!confirm('Criar nova apresentação com todos os nomes desta planilha?')) return;
+  
+  showDevMessage('Gerando slides... (aguarde)', 'info');
+  
+  google.script.run
+    .withSuccessHandler(function(response) {
+      console.log('Resposta regenerateSlides:', response);
+      if (response.success) {
+        document.getElementById('presentationLink').href = response.presentationUrl;
+        showDevMessage('✅ Slides criados! Link da apresentação atualizado acima.', 'success');
+      } else {
+        showDevMessage(' Erro: ' + response.error, 'error');
+      }
+    })
+    .withFailureHandler(function(error) {
+      console.error('Erro na chamada regenerateSlides:', error);
+      showDevMessage('❌ Erro de conexão: ' + error.message, 'error');
+    })
+    .regenerateSlidesForDev(currentShabatDate);
+}
+
+  function exportNamesJSON() {
+    showDevMessage('Exportando...', 'info');
+    google.script.run
+      .withSuccessHandler(function(data) {
+        if (data.success === false) {
+          showDevMessage('Erro: ' + data.error, 'error');
+          return;
+        }
+        
+        var jsonStr = JSON.stringify(data, null, 2);
+        var blob = new Blob([jsonStr], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'pedidos_' + (data.spreadsheetName || 'cura').replace(/[^a-z0-9]/gi, '_') + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showDevMessage('Exportado! ' + data.totalNomes + ' nomes', 'success');
+      })
+      .withFailureHandler(function(error) {
+        showDevMessage('Erro: ' + error.message, 'error');
+      })
+      .exportNamesAsJSON(currentShabatDate);
+  }
+
+  function showDevMessage(text, type) {
+    var msgDiv = document.getElementById('devMessage');
+    msgDiv.textContent = text;
+    msgDiv.style.display = 'block';
+    msgDiv.style.background = type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1';
+    msgDiv.style.color = type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460';
+    setTimeout(function() { msgDiv.style.display = 'none'; }, 5000);
   }
 </script>
