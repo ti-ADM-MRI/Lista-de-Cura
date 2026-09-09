@@ -174,8 +174,7 @@ function saveNames(names, shabatDate) {
 
 function createSlidesPresentation(names, shabatDate) {
   try {
-    Logger.log('=== INÍCIO createSlidesPresentation ===');
-    Logger.log('Total de nomes recebidos: ' + names.length);
+    Logger.log('=== INÍCIO (OTIMIZADO PARA POWERPOINT) ===');
     
     var presentationName = 'Pedidos de Cura - Shabat ' + shabatDate;
     var presentation = SlidesApp.create(presentationName);
@@ -185,54 +184,37 @@ function createSlidesPresentation(names, shabatDate) {
       return name && typeof name === 'string' && name.trim().length > 0;
     });
     
-    if (validNames.length === 0) {
-      throw new Error('Nenhum nome válido');
-    }
+    if (validNames.length === 0) throw new Error('Nenhum nome válido');
     
     var totalNomes = validNames.length;
-    Logger.log('Nomes válidos: ' + totalNomes);
     
-    // === DIMENSÕES FIXAS DO SLIDE ===
-    var SLIDE_WIDTH = 720;
-    var SLIDE_HEIGHT = 405;
+    // === DIMENSÕES ===
+    var SLIDE_WIDTH = 720, SLIDE_HEIGHT = 405;
+    var CARD_X = 35, CARD_Y = 25, CARD_WIDTH = 650, CARD_HEIGHT = 355;
+    var TITLE_X = 55, TITLE_Y = 32, TITLE_WIDTH = 610, TITLE_HEIGHT = 38;
+    var NAMES_X = 55, NAMES_Y = 80, NAMES_WIDTH = 610, NAMES_HEIGHT = 280;
+    var FOOTER_X = 55, FOOTER_Y = 368, FOOTER_WIDTH = 610, FOOTER_HEIGHT = 12;
     
-    // === COORDENADAS ABSOLUTAS ===
-    var CARD_X = 30, CARD_Y = 20, CARD_WIDTH = 660, CARD_HEIGHT = 365;
-    var TITLE_X = 50, TITLE_Y = 30, TITLE_WIDTH = 620, TITLE_HEIGHT = 35;
-    
-    // Área de nomes
-    var NAMES_X = 50;
-    var NAMES_Y = 75;  // Mais abaixo para compensar PowerPoint
-    var NAMES_WIDTH = 620;
-    var NAMES_HEIGHT = 285;  // Reduzido para evitar vazamento no PPTX
-    
-    var FOOTER_X = 50, FOOTER_Y = 365, FOOTER_WIDTH = 620, FOOTER_HEIGHT = 15;
-    
-    // === CONFIGURAÇÃO DE COLUNAS ===
     var COLUMNS = 4;
-    var COL_PADDING = 10;
-    var COL_SPACING = 10;
+    var COL_PADDING = 12, COL_SPACING = 12;
     var COLS_AVAILABLE_WIDTH = NAMES_WIDTH - (COL_PADDING * 2);
     var COL_WIDTH = (COLS_AVAILABLE_WIDTH - (COL_SPACING * (COLUMNS - 1))) / COLUMNS;
     
-    // === CÁLCULO DINÂMICO DE SLIDES (mais conservador para PPTX) ===
-    var maxNomesPorColuna = 27; // Reduzido de 28 para 27 (mais margem para PPTX)
-    var maxNomesPorSlide = maxNomesPorColuna * COLUMNS; // 108
+    // === MENOS NOMES POR COLUNA (margem para PowerPoint) ===
+    var maxNomesPorColuna = 25; // Reduzido para PowerPoint
+    var maxNomesPorSlide = maxNomesPorColuna * COLUMNS; // 100
     var totalSlides = Math.ceil(totalNomes / maxNomesPorSlide);
     if (totalSlides < 1) totalSlides = 1;
     
-    Logger.log('Total de slides: ' + totalSlides + ' (max ' + maxNomesPorColuna + ' nomes/coluna)');
+    Logger.log('Slides: ' + totalSlides + ' (25 nomes/coluna)');
     
     var slides = presentation.getSlides();
     var nomeAtual = 0;
     
     for (var slideIndex = 0; slideIndex < totalSlides; slideIndex++) {
-      Logger.log('Criando slide ' + (slideIndex + 1) + ' de ' + totalSlides);
-      
       var nomesRestantes = totalNomes - nomeAtual;
       var slidesRestantes = totalSlides - slideIndex;
       var nomesNesteSlide = Math.ceil(nomesRestantes / slidesRestantes);
-      
       var nomesPorColunaBase = Math.floor(nomesNesteSlide / COLUMNS);
       var colunasComExtra = nomesNesteSlide % COLUMNS;
       
@@ -240,34 +222,39 @@ function createSlidesPresentation(names, shabatDate) {
       if (slideIndex === 0 && slides.length > 0) {
         slide = slides[0];
         var pageElements = slide.getPageElements();
-        for (var i = 0; i < pageElements.length; i++) {
-          pageElements[i].remove();
-        }
+        for (var i = 0; i < pageElements.length; i++) pageElements[i].remove();
       } else {
         slide = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
       }
       
-      // CAMADA 1: FUNDO AZUL
+      // 1. FUNDO
       var bg = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, 0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
       bg.getFill().setSolidFill('#4A90E2');
       
-      // CAMADA 2: FAIXAS DECORATIVAS
-      var deco1 = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, SLIDE_WIDTH - 80, 0, 80, SLIDE_HEIGHT);
-      deco1.getFill().setSolidFill('#357ABD');
-      var deco2 = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, SLIDE_WIDTH - 40, 30, 40, SLIDE_HEIGHT - 60);
-      deco2.getFill().setSolidFill('#2C6AA8');
+      // 2. FAIXAS
+      slide.insertShape(SlidesApp.ShapeType.RECTANGLE, SLIDE_WIDTH - 75, 0, 75, SLIDE_HEIGHT).getFill().setSolidFill('#357ABD');
+      slide.insertShape(SlidesApp.ShapeType.RECTANGLE, SLIDE_WIDTH - 38, 28, 38, SLIDE_HEIGHT - 56).getFill().setSolidFill('#2C6AA8');
       
-      // CAMADA 3: CARD BRANCO
-      var card = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, CARD_X, CARD_Y, CARD_WIDTH, CARD_HEIGHT);
-      card.getFill().setSolidFill('#FFFFFF');
+      // 3. CARD
+      slide.insertShape(SlidesApp.ShapeType.RECTANGLE, CARD_X, CARD_Y, CARD_WIDTH, CARD_HEIGHT).getFill().setSolidFill('#FFFFFF');
       
-      // CAMADA 4: TÍTULO
+      // 4. TÍTULO
       var title = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT);
       title.getText().setText('Pedidos de Cura - Shabat ' + shabatDate);
       title.getText().getTextStyle().setFontSize(20).setBold(true).setForegroundColor('#1a73e8');
       title.getFill().setTransparent();
       
-      // CAMADA 5: NOMES EM 4 COLUNAS
+      // 5. SHAPE DUMMY (absorve estilo padrão ANTES das colunas)
+      var dummy = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, -500, -500, 10, 10);
+      dummy.getFill().setTransparent();
+      var dummyText = dummy.getText();
+      dummyText.setText('x');
+      dummyText.getTextStyle().setFontSize(1).setForegroundColor('#FFFFFF');
+      try {
+        dummyText.getParagraphStyle().setSpaceAbove(0).setSpaceBelow(0).setLineSpacing(100);
+      } catch(e) {}
+      
+      // 6. COLUNAS
       for (var col = 0; col < COLUMNS; col++) {
         var colX = NAMES_X + COL_PADDING + (col * (COL_WIDTH + COL_SPACING));
         var nomesNestaColuna = nomesPorColunaBase + (col < colunasComExtra ? 1 : 0);
@@ -281,45 +268,32 @@ function createSlidesPresentation(names, shabatDate) {
         }
         
         if (columnNames.length > 0) {
-          // Shape com margem extra para PowerPoint
-          var colShape = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, colX, NAMES_Y - 8, COL_WIDTH, NAMES_HEIGHT + 16);
+          var colShape = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, colX, NAMES_Y, COL_WIDTH, NAMES_HEIGHT);
           colShape.getFill().setTransparent();
           
           var textRange = colShape.getText();
           textRange.setText(columnNames.join('\n'));
           textRange.getTextStyle().setFontSize(9).setFontFamily('Trebuchet MS').setForegroundColor('#555555');
           
-          // Estilo otimizado para PowerPoint
           try {
-            var paraStyle = textRange.getParagraphStyle();
-            paraStyle.setSpaceAbove(0);
-            paraStyle.setSpaceBelow(0);
-            paraStyle.setLineSpacing(95); // 95% para compensar PowerPoint
-          } catch (e) {
-            Logger.log('Aviso coluna ' + col + ': ' + e.toString());
-          }
+            textRange.getParagraphStyle().setSpaceAbove(0).setSpaceBelow(0).setLineSpacing(100);
+          } catch(e) {}
         }
       }
       
-      // CAMADA 6: FOOTER (apenas no último slide)
+      // 7. FOOTER
       if (slideIndex === totalSlides - 1) {
-        var footerText = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, FOOTER_X, FOOTER_Y, FOOTER_WIDTH, FOOTER_HEIGHT);
-        footerText.getText().setText('...e o Ponto de Estudos da Torah no Brasil e no Mundo.');
-        footerText.getText().getTextStyle().setFontSize(9).setItalic(true).setForegroundColor('#666666');
-        footerText.getFill().setTransparent();
+        var footer = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, FOOTER_X, FOOTER_Y, FOOTER_WIDTH, FOOTER_HEIGHT);
+        footer.getText().setText('...e o Ponto de Estudos da Torah no Brasil e no Mundo.');
+        footer.getText().getTextStyle().setFontSize(8).setItalic(true).setForegroundColor('#666666');
+        footer.getFill().setTransparent();
       }
     }
     
-    Logger.log('Slides criados com sucesso! ID: ' + presentationId);
-    
-    return { 
-      success: true, 
-      presentationId: presentationId, 
-      presentationUrl: 'https://docs.google.com/presentation/d/' + presentationId + '/edit' 
-    };
+    return { success: true, presentationId: presentationId, presentationUrl: 'https://docs.google.com/presentation/d/' + presentationId + '/edit' };
     
   } catch (e) {
-    Logger.log('ERRO em createSlidesPresentation: ' + e.toString());
+    Logger.log('ERRO: ' + e.toString());
     return { success: false, error: e.toString() };
   }
 }
