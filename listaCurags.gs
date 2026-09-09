@@ -331,33 +331,56 @@ function checkFormStatus() {
   var shabatDate = shabatInfo.shabatDate;
   var isDeveloper = checkDeveloperAccess();
   
+  // Calcula quarta-feira (3 dias antes do sábado)
   var wednesdayDate = new Date(shabatDate);
-  wednesdayDate.setDate(shabatDate.getDate() - 2);
+  wednesdayDate.setDate(shabatDate.getDate() - 3); // CORRIGIDO: -3 dias
+  
+  // Calcula segunda-feira (2 dias depois do sábado)
   var mondayDate = new Date(shabatDate);
   mondayDate.setDate(shabatDate.getDate() + 2);
   
+  // Define horários limites
   var wednesdayOpen = new Date(wednesdayDate);
-  wednesdayOpen.setHours(0, 1, 0, 0);
-  var saturdayClose = new Date(shabatDate);
-  saturdayClose.setHours(13, 0, 0, 0);
-  var mondayClose = new Date(mondayDate);
-  mondayClose.setHours(16, 0, 0, 0);
+  wednesdayOpen.setHours(0, 1, 0, 0); // Quarta-feira 00:01
   
-  var isOpen = false, message = '', showWarning = false;
+  var saturdayClose = new Date(shabatDate);
+  saturdayClose.setHours(10, 1, 0, 0); // Sábado 10:01
+  
+  var mondayClose = new Date(mondayDate);
+  mondayClose.setHours(16, 0, 0, 0); // Segunda-feira 16:00
+  
+  var isOpen = false;
+  var message = '';
+  var showWarning = false;
   
   if (isDeveloper) {
     isOpen = true;
     message = 'MODO DESENVOLVEDOR - Formulário aberto para o Shabat ' + shabatInfo.dateString;
-  } else if (now >= wednesdayOpen && now <= saturdayClose) {
+    showWarning = false;
+  }
+  else if (now >= wednesdayOpen && now <= saturdayClose) {
     isOpen = true;
     message = 'Formulário aberto para o Shabat ' + shabatInfo.dateString;
+  } else if (now > saturdayClose && now <= mondayClose) {
+    isOpen = false;
+    showWarning = true;
+    message = 'Formulário fechado. Próxima abertura: Quarta-feira ' + 
+              formatDateString(getNextWednesday()) + ' às 00:01';
   } else {
     isOpen = false;
     showWarning = true;
-    message = 'Formulário fechado. Abre na Quarta-feira ' + formatDateString(getNextWednesday()) + ' às 00:01';
+    message = 'Formulário fechado. Abre na Quarta-feira ' + 
+              formatDateString(getNextWednesday()) + ' às 00:01';
   }
   
-  return { isOpen: isOpen, message: message, showWarning: showWarning, shabatDate: shabatInfo.dateString, currentTime: now.toLocaleString('pt-BR'), isDeveloper: isDeveloper };
+  return {
+    isOpen: isOpen,
+    message: message,
+    showWarning: showWarning,
+    shabatDate: shabatInfo.dateString,
+    currentTime: now.toLocaleString('pt-BR'),
+    isDeveloper: isDeveloper
+  };
 }
 
 function getShabatDate() {
@@ -404,7 +427,7 @@ function processForm(names, shabatDate) {
 function checkDeveloperAccess() {
   try {
     var email = Session.getActiveUser().getEmail();
-    var developerEmails = ['ysamrocha@gmail.com', 'administrativa@remanescentedeisrael.com'];
+    var developerEmails = ['patricia.fonseca.sf@gmail.com', 'ysamrocha@gmail.com', 'administrativa@remanescentedeisrael.com'];
     return developerEmails.indexOf(email) !== -1;
   } catch (e) {
     return false;
