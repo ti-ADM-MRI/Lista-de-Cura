@@ -174,6 +174,9 @@ function saveNames(names, shabatDate) {
 
 function createSlidesPresentation(names, shabatDate) {
   try {
+    Logger.log('=== INÍCIO createSlidesPresentation ===');
+    Logger.log('Total de nomes recebidos: ' + names.length);
+    
     var presentationName = 'Pedidos de Cura - Shabat ' + shabatDate;
     var presentation = SlidesApp.create(presentationName);
     var presentationId = presentation.getId();
@@ -186,11 +189,50 @@ function createSlidesPresentation(names, shabatDate) {
       throw new Error('Nenhum nome válido');
     }
     
-    var namesPerSlide = 32;
-    var totalSlides = Math.ceil(validNames.length / namesPerSlide);
+    Logger.log('Nomes válidos: ' + validNames.length);
+    
+    // === DIMENSÕES DO SLIDE (Widescreen 16:9) ===
+    var SLIDE_WIDTH = 720;
+    var SLIDE_HEIGHT = 405;
+    
+    // === CARD BRANCO CENTRALIZADO ===
+    var CARD_MARGIN = 40;
+    var CARD_X = CARD_MARGIN;
+    var CARD_Y = CARD_MARGIN;
+    var CARD_WIDTH = SLIDE_WIDTH - (CARD_MARGIN * 2);
+    var CARD_HEIGHT = SLIDE_HEIGHT - (CARD_MARGIN * 2);
+    
+    // === TÍTULO ===
+    var TITLE_PADDING = 20;
+    var TITLE_HEIGHT = 40;
+    var TITLE_X = CARD_X + TITLE_PADDING;
+    var TITLE_Y = CARD_Y + 10;
+    var TITLE_WIDTH = CARD_WIDTH - (TITLE_PADDING * 2);
+    
+    // === ÁREA DE NOMES ===
+    var NAMES_START_Y = TITLE_Y + TITLE_HEIGHT + 10;
+    var NAMES_END_Y = CARD_Y + CARD_HEIGHT - 30;
+    
+    // === 4 COLUNAS ===
+    var COLUMNS = 4;
+    var COL_PADDING = 15;
+    var COL_SPACING = 10;
+    var AVAILABLE_WIDTH = CARD_WIDTH - (COL_PADDING * 2);
+    var COL_WIDTH = (AVAILABLE_WIDTH - (COL_SPACING * (COLUMNS - 1))) / COLUMNS;
+    
+    // === 32 NOMES POR COLUNA ===
+    var NAMES_PER_COLUMN = 32;
+    var COL_HEIGHT = NAMES_END_Y - NAMES_START_Y;
+    var NAMES_PER_SLIDE = NAMES_PER_COLUMN * COLUMNS;
+    
+    var totalSlides = Math.ceil(validNames.length / NAMES_PER_SLIDE);
+    Logger.log('Total de slides: ' + totalSlides);
+    
     var slides = presentation.getSlides();
     
     for (var slideIndex = 0; slideIndex < totalSlides; slideIndex++) {
+      Logger.log('Criando slide ' + (slideIndex + 1) + ' de ' + totalSlides);
+      
       var slide;
       
       if (slideIndex === 0 && slides.length > 0) {
@@ -203,43 +245,72 @@ function createSlidesPresentation(names, shabatDate) {
         slide = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
       }
       
-      // Título simplificado
-      var title = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, 50, 20, 620, 60);
+      // === 1. FUNDO AZUL ===
+      var bg = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, 0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
+      bg.getFill().setSolidFill('#4A90E2');
+      
+      // === 2. ELEMENTO DECORATIVO (faixa à direita) ===
+      var decoWidth = 80;
+      var deco1 = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, SLIDE_WIDTH - decoWidth, 0, decoWidth, SLIDE_HEIGHT);
+      deco1.getFill().setSolidFill('#357ABD');
+      
+      var deco2Width = 40;
+      var deco2 = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, SLIDE_WIDTH - deco2Width, 40, deco2Width, SLIDE_HEIGHT - 80);
+      deco2.getFill().setSolidFill('#2C6AA8');
+      
+      // === 3. CARD BRANCO CENTRALIZADO ===
+      var card = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, CARD_X, CARD_Y, CARD_WIDTH, CARD_HEIGHT);
+      card.getFill().setSolidFill('#FFFFFF');
+      
+      // === 4. TÍTULO ===
+      var title = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT);
       title.getText().setText('Pedidos de Cura - Shabat ' + shabatDate);
-      title.getText().getTextStyle().setFontSize(24).setBold(true);
+      title.getText().getTextStyle().setFontSize(20).setBold(true).setForegroundColor('#1a73e8');
       title.getFill().setTransparent();
       
-      var startIndex = slideIndex * namesPerSlide;
-      var endIndex = Math.min(startIndex + namesPerSlide, validNames.length);
+      // === 5. NOMES EM 4 COLUNAS (um shape por coluna) ===
+      var startIndex = slideIndex * NAMES_PER_SLIDE;
+      var endIndex = Math.min(startIndex + NAMES_PER_SLIDE, validNames.length);
       var slideNames = validNames.slice(startIndex, endIndex);
       
-      var columnWidth = 150;
-      var columnSpacing = 20;
-      var startX = 50;
-      var rowHeight = 28;
-      var startY = 100;
-      var columns = 4;
+      Logger.log('Slide ' + (slideIndex + 1) + ': ' + slideNames.length + ' nomes');
       
-      for (var i = 0; i < slideNames.length; i++) {
-        var col = i % columns;
-        var row = Math.floor(i / columns);
-        var xPos = startX + (col * (columnWidth + columnSpacing));
-        var yPos = startY + (row * rowHeight);
+      // Cria 4 colunas, cada uma com seus nomes
+      for (var col = 0; col < COLUMNS; col++) {
+        var xPos = CARD_X + COL_PADDING + (col * (COL_WIDTH + COL_SPACING));
         
-        var nameShape = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, xPos, yPos, columnWidth, 25);
-        nameShape.getText().setText(slideNames[i]);
-        nameShape.getText().getTextStyle().setFontSize(11);
-        nameShape.getFill().setTransparent();
+        // Pega os nomes desta coluna
+        var columnNames = [];
+        for (var row = 0; row < NAMES_PER_COLUMN; row++) {
+          var nameIndex = (row * COLUMNS) + col;
+          if (nameIndex < slideNames.length) {
+            columnNames.push(slideNames[nameIndex]);
+          }
+        }
+        
+        if (columnNames.length > 0) {
+          // Cria UM shape para toda a coluna
+          var colShape = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, xPos, NAMES_START_Y, COL_WIDTH, COL_HEIGHT);
+          colShape.getFill().setTransparent();
+          
+          // Insere todos os nomes separados por quebra de linha
+          var textRange = colShape.getText();
+          textRange.setText(columnNames.join('\n'));
+          textRange.getTextStyle().setFontSize(10).setFontFamily('Trebuchet MS').setForegroundColor('#555555');
+        }
       }
       
-      // Footer simplificado - SEM setAlignment
+      // === 6. FOOTER (apenas no último slide) ===
       if (slideIndex === totalSlides - 1) {
-        var footerText = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, 50, 450, 620, 60);
+        var footerY = CARD_Y + CARD_HEIGHT - 25;
+        var footerText = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, TITLE_X, footerY, TITLE_WIDTH, 20);
         footerText.getText().setText('...e o Ponto de Estudos da Torah no Brasil e no Mundo.');
-        footerText.getText().getTextStyle().setFontSize(14).setItalic(true);
+        footerText.getText().getTextStyle().setFontSize(9).setItalic(true).setForegroundColor('#666666');
         footerText.getFill().setTransparent();
       }
     }
+    
+    Logger.log('Slides criados com sucesso! ID: ' + presentationId);
     
     return { 
       success: true, 
@@ -248,7 +319,8 @@ function createSlidesPresentation(names, shabatDate) {
     };
     
   } catch (e) {
-    Logger.log('ERRO: ' + e.toString());
+    Logger.log('ERRO em createSlidesPresentation: ' + e.toString());
+    Logger.log('Stack: ' + e.stack);
     return { success: false, error: e.toString() };
   }
 }
