@@ -189,52 +189,54 @@ function createSlidesPresentation(names, shabatDate) {
       throw new Error('Nenhum nome válido');
     }
     
-    Logger.log('Nomes válidos: ' + validNames.length);
+    var totalNomes = validNames.length;
+    Logger.log('Nomes válidos: ' + totalNomes);
     
-    // === DIMENSÕES DO SLIDE (Widescreen 16:9) ===
+    // === DIMENSÕES FIXAS DO SLIDE ===
     var SLIDE_WIDTH = 720;
     var SLIDE_HEIGHT = 405;
     
-    // === CARD BRANCO CENTRALIZADO ===
-    var CARD_MARGIN = 40;
-    var CARD_X = CARD_MARGIN;
-    var CARD_Y = CARD_MARGIN;
-    var CARD_WIDTH = SLIDE_WIDTH - (CARD_MARGIN * 2);
-    var CARD_HEIGHT = SLIDE_HEIGHT - (CARD_MARGIN * 2);
+    // === COORDENADAS ABSOLUTAS ===
+    var CARD_X = 30, CARD_Y = 20, CARD_WIDTH = 660, CARD_HEIGHT = 365;
+    var TITLE_X = 50, TITLE_Y = 30, TITLE_WIDTH = 620, TITLE_HEIGHT = 35;
     
-    // === TÍTULO ===
-    var TITLE_PADDING = 20;
-    var TITLE_HEIGHT = 40;
-    var TITLE_X = CARD_X + TITLE_PADDING;
-    var TITLE_Y = CARD_Y + 10;
-    var TITLE_WIDTH = CARD_WIDTH - (TITLE_PADDING * 2);
+    // Área de nomes
+    var NAMES_X = 50;
+    var NAMES_Y = 75;  // Mais abaixo para compensar PowerPoint
+    var NAMES_WIDTH = 620;
+    var NAMES_HEIGHT = 285;  // Reduzido para evitar vazamento no PPTX
     
-    // === ÁREA DE NOMES ===
-    var NAMES_START_Y = TITLE_Y + TITLE_HEIGHT + 10;
-    var NAMES_END_Y = CARD_Y + CARD_HEIGHT - 30;
+    var FOOTER_X = 50, FOOTER_Y = 365, FOOTER_WIDTH = 620, FOOTER_HEIGHT = 15;
     
-    // === 4 COLUNAS ===
+    // === CONFIGURAÇÃO DE COLUNAS ===
     var COLUMNS = 4;
-    var COL_PADDING = 15;
+    var COL_PADDING = 10;
     var COL_SPACING = 10;
-    var AVAILABLE_WIDTH = CARD_WIDTH - (COL_PADDING * 2);
-    var COL_WIDTH = (AVAILABLE_WIDTH - (COL_SPACING * (COLUMNS - 1))) / COLUMNS;
+    var COLS_AVAILABLE_WIDTH = NAMES_WIDTH - (COL_PADDING * 2);
+    var COL_WIDTH = (COLS_AVAILABLE_WIDTH - (COL_SPACING * (COLUMNS - 1))) / COLUMNS;
     
-    // === 32 NOMES POR COLUNA ===
-    var NAMES_PER_COLUMN = 32;
-    var COL_HEIGHT = NAMES_END_Y - NAMES_START_Y;
-    var NAMES_PER_SLIDE = NAMES_PER_COLUMN * COLUMNS;
+    // === CÁLCULO DINÂMICO DE SLIDES (mais conservador para PPTX) ===
+    var maxNomesPorColuna = 27; // Reduzido de 28 para 27 (mais margem para PPTX)
+    var maxNomesPorSlide = maxNomesPorColuna * COLUMNS; // 108
+    var totalSlides = Math.ceil(totalNomes / maxNomesPorSlide);
+    if (totalSlides < 1) totalSlides = 1;
     
-    var totalSlides = Math.ceil(validNames.length / NAMES_PER_SLIDE);
-    Logger.log('Total de slides: ' + totalSlides);
+    Logger.log('Total de slides: ' + totalSlides + ' (max ' + maxNomesPorColuna + ' nomes/coluna)');
     
     var slides = presentation.getSlides();
+    var nomeAtual = 0;
     
     for (var slideIndex = 0; slideIndex < totalSlides; slideIndex++) {
       Logger.log('Criando slide ' + (slideIndex + 1) + ' de ' + totalSlides);
       
-      var slide;
+      var nomesRestantes = totalNomes - nomeAtual;
+      var slidesRestantes = totalSlides - slideIndex;
+      var nomesNesteSlide = Math.ceil(nomesRestantes / slidesRestantes);
       
+      var nomesPorColunaBase = Math.floor(nomesNesteSlide / COLUMNS);
+      var colunasComExtra = nomesNesteSlide % COLUMNS;
+      
+      var slide;
       if (slideIndex === 0 && slides.length > 0) {
         slide = slides[0];
         var pageElements = slide.getPageElements();
@@ -245,65 +247,63 @@ function createSlidesPresentation(names, shabatDate) {
         slide = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
       }
       
-      // === 1. FUNDO AZUL ===
+      // CAMADA 1: FUNDO AZUL
       var bg = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, 0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
       bg.getFill().setSolidFill('#4A90E2');
       
-      // === 2. ELEMENTO DECORATIVO (faixa à direita) ===
-      var decoWidth = 80;
-      var deco1 = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, SLIDE_WIDTH - decoWidth, 0, decoWidth, SLIDE_HEIGHT);
+      // CAMADA 2: FAIXAS DECORATIVAS
+      var deco1 = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, SLIDE_WIDTH - 80, 0, 80, SLIDE_HEIGHT);
       deco1.getFill().setSolidFill('#357ABD');
-      
-      var deco2Width = 40;
-      var deco2 = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, SLIDE_WIDTH - deco2Width, 40, deco2Width, SLIDE_HEIGHT - 80);
+      var deco2 = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, SLIDE_WIDTH - 40, 30, 40, SLIDE_HEIGHT - 60);
       deco2.getFill().setSolidFill('#2C6AA8');
       
-      // === 3. CARD BRANCO CENTRALIZADO ===
+      // CAMADA 3: CARD BRANCO
       var card = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, CARD_X, CARD_Y, CARD_WIDTH, CARD_HEIGHT);
       card.getFill().setSolidFill('#FFFFFF');
       
-      // === 4. TÍTULO ===
+      // CAMADA 4: TÍTULO
       var title = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT);
       title.getText().setText('Pedidos de Cura - Shabat ' + shabatDate);
       title.getText().getTextStyle().setFontSize(20).setBold(true).setForegroundColor('#1a73e8');
       title.getFill().setTransparent();
       
-      // === 5. NOMES EM 4 COLUNAS (um shape por coluna) ===
-      var startIndex = slideIndex * NAMES_PER_SLIDE;
-      var endIndex = Math.min(startIndex + NAMES_PER_SLIDE, validNames.length);
-      var slideNames = validNames.slice(startIndex, endIndex);
-      
-      Logger.log('Slide ' + (slideIndex + 1) + ': ' + slideNames.length + ' nomes');
-      
-      // Cria 4 colunas, cada uma com seus nomes
+      // CAMADA 5: NOMES EM 4 COLUNAS
       for (var col = 0; col < COLUMNS; col++) {
-        var xPos = CARD_X + COL_PADDING + (col * (COL_WIDTH + COL_SPACING));
+        var colX = NAMES_X + COL_PADDING + (col * (COL_WIDTH + COL_SPACING));
+        var nomesNestaColuna = nomesPorColunaBase + (col < colunasComExtra ? 1 : 0);
         
-        // Pega os nomes desta coluna
         var columnNames = [];
-        for (var row = 0; row < NAMES_PER_COLUMN; row++) {
-          var nameIndex = (row * COLUMNS) + col;
-          if (nameIndex < slideNames.length) {
-            columnNames.push(slideNames[nameIndex]);
+        for (var row = 0; row < nomesNestaColuna; row++) {
+          if (nomeAtual < totalNomes) {
+            columnNames.push(validNames[nomeAtual]);
+            nomeAtual++;
           }
         }
         
         if (columnNames.length > 0) {
-          // Cria UM shape para toda a coluna
-          var colShape = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, xPos, NAMES_START_Y, COL_WIDTH, COL_HEIGHT);
+          // Shape com margem extra para PowerPoint
+          var colShape = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, colX, NAMES_Y - 8, COL_WIDTH, NAMES_HEIGHT + 16);
           colShape.getFill().setTransparent();
           
-          // Insere todos os nomes separados por quebra de linha
           var textRange = colShape.getText();
           textRange.setText(columnNames.join('\n'));
-          textRange.getTextStyle().setFontSize(10).setFontFamily('Trebuchet MS').setForegroundColor('#555555');
+          textRange.getTextStyle().setFontSize(9).setFontFamily('Trebuchet MS').setForegroundColor('#555555');
+          
+          // Estilo otimizado para PowerPoint
+          try {
+            var paraStyle = textRange.getParagraphStyle();
+            paraStyle.setSpaceAbove(0);
+            paraStyle.setSpaceBelow(0);
+            paraStyle.setLineSpacing(95); // 95% para compensar PowerPoint
+          } catch (e) {
+            Logger.log('Aviso coluna ' + col + ': ' + e.toString());
+          }
         }
       }
       
-      // === 6. FOOTER (apenas no último slide) ===
+      // CAMADA 6: FOOTER (apenas no último slide)
       if (slideIndex === totalSlides - 1) {
-        var footerY = CARD_Y + CARD_HEIGHT - 25;
-        var footerText = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, TITLE_X, footerY, TITLE_WIDTH, 20);
+        var footerText = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, FOOTER_X, FOOTER_Y, FOOTER_WIDTH, FOOTER_HEIGHT);
         footerText.getText().setText('...e o Ponto de Estudos da Torah no Brasil e no Mundo.');
         footerText.getText().getTextStyle().setFontSize(9).setItalic(true).setForegroundColor('#666666');
         footerText.getFill().setTransparent();
@@ -320,7 +320,47 @@ function createSlidesPresentation(names, shabatDate) {
     
   } catch (e) {
     Logger.log('ERRO em createSlidesPresentation: ' + e.toString());
-    Logger.log('Stack: ' + e.stack);
+    return { success: false, error: e.toString() };
+  }
+}
+
+function regenerateSlidesForDev(shabatDate) {
+  try {
+    Logger.log('=== INÍCIO regenerateSlidesForDev ===');
+    
+    var result = getValidSpreadsheet(shabatDate);
+    if (!result) throw new Error('Planilha não encontrada');
+    
+    var ss = result.ss;
+    var sheet = ss.getSheetByName('Pedidos');
+    if (!sheet) throw new Error('Aba Pedidos não encontrada');
+    
+    var allNames = [];
+    var lastRow = sheet.getLastRow();
+    var lastColumn = sheet.getLastColumn();
+    
+    Logger.log('Planilha: ' + lastRow + ' linhas x ' + lastColumn + ' colunas');
+    
+    // LEITURA COLUNA POR COLUNA (ordem correta)
+    for (var col = 1; col <= lastColumn; col++) {
+      for (var row = 2; row <= lastRow; row++) {
+        var cellValue = sheet.getRange(row, col).getValue();
+        if (cellValue && cellValue.toString().trim() !== '') {
+          allNames.push(cellValue.toString().trim());
+        }
+      }
+    }
+    
+    Logger.log('Total de nomes lidos: ' + allNames.length);
+    
+    if (allNames.length === 0) {
+      throw new Error('Nenhum nome encontrado na planilha');
+    }
+    
+    return createSlidesPresentation(allNames, shabatDate);
+    
+  } catch (e) {
+    Logger.log('ERRO regenerateSlidesForDev: ' + e.toString());
     return { success: false, error: e.toString() };
   }
 }
@@ -558,39 +598,61 @@ function exportNamesAsJSON(shabatDate) {
   }
 }
 
-function regenerateSlidesForDev(shabatDate) {
+function debugPlanilha() {
   try {
+    var shabatDate = '12/09/2026';
     var result = getValidSpreadsheet(shabatDate);
-    if (!result) throw new Error('Planilha não encontrada');
+    
+    if (!result) {
+      return { error: 'Planilha não encontrada' };
+    }
     
     var ss = result.ss;
     var sheet = ss.getSheetByName('Pedidos');
-    if (!sheet) throw new Error('Aba Pedidos não encontrada');
     
-    var allNames = [];
+    if (!sheet) {
+      return { error: 'Aba Pedidos não encontrada' };
+    }
+    
     var lastRow = sheet.getLastRow();
     var lastColumn = sheet.getLastColumn();
     
-    if (lastRow > 1 && lastColumn > 0) {
-      var range = sheet.getRange(2, 1, lastRow - 1, lastColumn);
-      var values = range.getValues();
-      for (var row = 0; row < values.length; row++) {
-        for (var col = 0; col < values[row].length; col++) {
-          if (values[row][col] && values[row][col].toString().trim() !== '') {
-            allNames.push(values[row][col].toString().trim());
-          }
+    Logger.log('=== DEBUG PLANILHA ===');
+    Logger.log('ID da planilha: ' + result.id);
+    Logger.log('Nome: ' + result.name);
+    Logger.log('Última linha: ' + lastRow);
+    Logger.log('Última coluna: ' + lastColumn + ' (letra: ' + String.fromCharCode(64 + lastColumn) + ')');
+    
+    var totalNomes = 0;
+    var nomesPorColuna = [];
+    
+    for (var col = 1; col <= lastColumn; col++) {
+      var nomesNaColuna = 0;
+      for (var row = 2; row <= lastRow; row++) {
+        var cellValue = sheet.getRange(row, col).getValue();
+        if (cellValue && cellValue.toString().trim() !== '') {
+          nomesNaColuna++;
+          totalNomes++;
         }
       }
+      nomesPorColuna.push({
+        coluna: String.fromCharCode(64 + col),
+        nomes: nomesNaColuna
+      });
+      Logger.log('Coluna ' + String.fromCharCode(64 + col) + ': ' + nomesNaColuna + ' nomes');
     }
     
-    if (allNames.length === 0) {
-      throw new Error('Nenhum nome encontrado na planilha');
-    }
+    Logger.log('TOTAL DE NOMES: ' + totalNomes);
     
-    return createSlidesPresentation(allNames, shabatDate);
+    return {
+      spreadsheetId: result.id,
+      totalNomes: totalNomes,
+      totalColunas: lastColumn,
+      nomesPorColuna: nomesPorColuna
+    };
     
   } catch (e) {
-    Logger.log('ERRO regenerateSlidesForDev: ' + e.toString());
-    return { success: false, error: e.toString() };
+    Logger.log('ERRO debugPlanilha: ' + e.toString());
+    return { error: e.toString() };
   }
 }
