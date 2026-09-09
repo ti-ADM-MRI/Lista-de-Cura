@@ -195,18 +195,30 @@ function downloadSpreadsheet() {
 }
 
 function regenerateSlides() {
-  if (!confirm('Criar nova apresentação com todos os nomes desta planilha?')) return;
-  
-  showDevMessage('Gerando slides... (aguarde)', 'info');
+  showDevMessage('Gerando slides...', 'info');
   
   google.script.run
     .withSuccessHandler(function(response) {
       console.log('Resposta regenerateSlides:', response);
       if (response.success) {
+        // Abre o download automático do PPTX
+        var pptxUrl = 'https://docs.google.com/presentation/d/' + response.presentationId + '/export/pptx';
+        
+        // Cria um link temporário para forçar o download
+        var a = document.createElement('a');
+        a.href = pptxUrl;
+        a.download = 'Pedidos_de_Cura_Shabat_' + currentShabatDate.replace(/\//g, '-') + '.pptx';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        // Também atualiza o link na tela principal
         document.getElementById('presentationLink').href = response.presentationUrl;
-        showDevMessage('✅ Slides criados! Link da apresentação atualizado acima.', 'success');
+        
+        showDevMessage('✅ Slides gerados e PPTX baixado!', 'success');
       } else {
-        showDevMessage(' Erro: ' + response.error, 'error');
+        showDevMessage('❌ Erro: ' + response.error, 'error');
       }
     })
     .withFailureHandler(function(error) {
