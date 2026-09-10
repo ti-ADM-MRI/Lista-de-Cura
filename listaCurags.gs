@@ -2,6 +2,7 @@ function doGet() {
   var template = HtmlService.createTemplateFromFile('listaCura');
   return template.evaluate()
     .setTitle('Pedidos de Cura - Shabat')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1') // <-- LINHA ESSENCIAL
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
@@ -629,4 +630,29 @@ function debugPlanilha() {
     Logger.log('ERRO debugPlanilha: ' + e.toString());
     return { error: e.toString() };
   }
+}
+
+function checkDeveloperAccess() {
+  var email = Session.getActiveUser().getEmail();
+  
+  Logger.log('=== CHECK DEV ACCESS ===');
+  Logger.log('Email recebido: "' + email + '"');
+  Logger.log('Email é vazio?: ' + (email === ''));
+  Logger.log('Email é null?: ' + (email === null));
+  
+  var devEmails = [
+    'ysamrocha@gmail.com',
+    'administrativa@remanescentedeisrael.com'
+  ];
+  
+  if (!email || email.trim() === '') {
+    Logger.log('❌ USUÁRIO NÃO LOGADO - Retornando FALSE');
+    return false;
+  }
+  
+  var isDev = devEmails.indexOf(email.toLowerCase()) !== -1;
+  Logger.log('Email está na lista?: ' + isDev);
+  Logger.log('===================');
+  
+  return isDev;
 }
