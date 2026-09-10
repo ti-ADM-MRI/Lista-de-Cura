@@ -2,12 +2,19 @@
 <html>
   <head>
     <base target="_top">
+    <!-- LINHA MÁGICA PARA RESPONSIVIDADE NO CELULAR -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <?!= include('styles'); ?>
   </head>
   <body>
     <div class="container">
       <h1>Pedidos de Cura - Shabat <span id="shabatDate">Carregando...</span></h1>
       <div id="currentTime" style="text-align: center; color: #666; margin-bottom: 10px; font-size: 12px;"></div>
+      
+      <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin-top: 15px; font-size: 13px; text-align: center; border-left: 4px solid #ffc107;">
+        <strong>⚙️ Sistema em aprimoramento</strong> | Para sua comodidade, utilize Wi-Fi.<br>
+        <small>Dados móveis poderão ser utilizados.</small>
+      </div>
       
       <div id="warningBox" class="warning-box" style="display: none;">
         <p id="warningMessage"></p>
@@ -19,41 +26,52 @@
           <button type="button" class="btn-add" onclick="addNameField()">(+ ) Adicionar Nome</button>
           <button type="button" class="btn-submit" onclick="submitForm()">Enviar</button>
         </div>
+        <div style="text-align: center; color: #888; font-size: 11px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+          Sistema em fase de homologação • Ponto de Estudos da Torah - SP Capital
+        </div>
         <div id="message" class="message"></div>
-        <div id="results" class="results" style="display:none;">
+        <!--<div id="results" class="results" style="display:none;">
           <h3>Links Gerados:</h3>
           <p><strong>Planilha:</strong> <a id="spreadsheetLink" href="#" target="_blank">Clique aqui</a></p>
           <p><strong>Apresentação:</strong> <a id="presentationLink" href="#" target="_blank">Clique aqui</a></p>
-        </div>
+        </div>-->
       </div>
     </div>
 
-    <!-- Botão DEV discreto (Canto inferior direito) -->
-    <div id="devButton" style="position: fixed; bottom: 20px; right: 20px; width: 40px; height: 40px; background: #ffc107; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0.3; transition: opacity 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1000;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.3'" onclick="toggleDevPanel()">
-      <span style="font-size: 20px;">⚙️</span>
+    <!-- Botão DEV discreto -->
+    <div id="devButton" style="display: none; position: fixed; bottom: 20px; right: 20px; width: 40px; height: 40px; background: #ffc107; border-radius: 50%; cursor: pointer; opacity: 0.3; transition: opacity 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1000;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.3'" onclick="toggleDevPanel()">
+      <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 22px; line-height: 1;">⚙️</span>
     </div>
 
     <!-- Painel DEV -->
-    <div id="devPanel" style="display: none; position: fixed; bottom: 70px; right: 20px; width: 350px; background: white; border-radius: 10px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); padding: 20px; z-index: 1000; max-height: 80vh; overflow-y: auto;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <h3 style="color: #ff9800; margin: 0; font-size: 18px;">⚙️ Painel DEV</h3>
-        <button onclick="closeDevPanel()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+    <div id="devPanel" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); z-index: 2000; min-width: 320px; max-width: 400px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+        <h3 style="margin: 0; color: #ff9800; font-size: 20px;">
+          <span style="font-size: 24px; margin-right: 8px;">⚙️</span> Painel DEV
+        </h3>
+        <button onclick="toggleDevPanel()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0; line-height: 1;">&times;</button>
       </div>
-      <div id="devStats" style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 14px;">
-        <p style="margin: 5px 0;"><strong>Nomes:</strong> <span id="totalNames">-</span></p>
-        <p style="margin: 5px 0;"><strong>Slides:</strong> <span id="totalSlides">-</span></p>
-        <p style="margin: 5px 0;"><strong>Atualizado:</strong> <span id="lastUpdate">-</span></p>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <button onclick="downloadSpreadsheet()" class="dev-btn">📥 Download Planilha XLSX</button>
-        <button onclick="exportNamesJSON()" class="dev-btn">📋 Exportar JSON</button>
-        <button onclick="regenerateSlides()" class="dev-btn">🔄 Regenerar Slides</button>
-        <button onclick="generateDocx()" class="dev-btn" style="background: #9c27b0; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-        📄 Gerar Word (.doc)
+      
+      <div id="devStats" style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; line-height: 1.8;"></div>
+      
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <button onclick="downloadSpreadsheet()" style="background: #217346; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: flex-start; gap: 10px;">
+          <span>📥</span> <span>Download Planilha XLSX</span>
         </button>
-        <button onclick="closeDevPanel()" class="dev-btn" style="background: #9e9e9e;">✖ Fechar</button>
-        <button onclick="generateProjectDoc()" class="dev-btn" style="background: #673ab7; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-          Documentação do Projeto
+        <button onclick="exportNamesJSON()" style="background: #5f6368; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: flex-start; gap: 10px;">
+          <span>📋</span> <span>Exportar JSON</span>
+        </button>
+        <button onclick="regenerateSlides()" style="background: #D24726; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: flex-start; gap: 10px;">
+          <span>📊</span> <span>Gerar Slides .pptx</span>
+        </button>
+        <button onclick="generateDocx()" style="background: #2B579A; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: flex-start; gap: 10px;">
+          <span>📄</span> <span>Gerar Word (.doc)</span>
+        </button>
+        <button onclick="toggleDevPanel()" style="background: #dc3545; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px;">
+          <span>✕</span> <span>Fechar</span>
+        </button>
+        <button onclick="generateProjectDoc()" style="background: #6f42c1; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px;">
+          <span>📚</span> <span>Documentação do Projeto</span>
         </button>
       </div>
       <div id="devMessage" style="margin-top: 10px; padding: 10px; border-radius: 5px; display: none; font-size: 13px;"></div>
