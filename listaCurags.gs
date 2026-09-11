@@ -562,6 +562,7 @@ function exportNamesAsJSON(shabatDate) {
     return {
       spreadsheetName: result.name,
       spreadsheetId: result.id,
+      shabatDate: shabatDate, // <--- ADICIONE ESTA LINHA
       totalNomes: allNames.length,
       exportadoEm: new Date().toLocaleString('pt-BR'),
       nomes: allNames
@@ -641,7 +642,6 @@ function checkDeveloperAccess() {
   Logger.log('Email é null?: ' + (email === null));
   
   var devEmails = [
-    'ysamrocha@gmail.com',
     'administrativa@remanescentedeisrael.com'
   ];
   
@@ -655,4 +655,8 @@ function checkDeveloperAccess() {
   Logger.log('===================');
   
   return isDev;
+}
+
+function getProjectDocumentationHtml() {
+  return HtmlService.createHtmlOutputFromFile('documentadoProjetoListaCura').getContent();
 }
