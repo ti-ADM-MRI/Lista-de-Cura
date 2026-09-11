@@ -1,35 +1,170 @@
 <script>
+  // Garante compatibilidade caso o código seja executado fora do Google Apps Script (ex: preview do navegador)
+  if (typeof google === 'undefined' || !google.script) {
+    window.google = {
+      script: {
+        run: {
+          withSuccessHandler: function(onSuccess) {
+            this._onSuccess = onSuccess;
+            return this;
+          },
+          withFailureHandler: function(onFailure) {
+            this._onFailure = onFailure;
+            return this;
+          },
+          checkFormStatus: function() {
+            var handler = this._onSuccess;
+            setTimeout(function() {
+              if (handler) {
+                handler({
+                  isOpen: true,
+                  shabatDate: '12/09/2026',
+                  currentTime: new Date().toLocaleString('pt-BR'),
+                  isDeveloper: true,
+                  showWarning: false,
+                  message: 'Ambiente de visualização ativo'
+                });
+              }
+            }, 300);
+          },
+          processForm: function(names, shabatDate) {
+            var handler = this._onSuccess;
+            setTimeout(function() {
+              if (handler) {
+                handler({
+                  success: true,
+                  spreadsheet: {
+                    newNames: names.length,
+                    duplicates: 0,
+                    message: '- ' + names.length + ' nome(s) adicionado(s)!'
+                  }
+                });
+              }
+            }, 500);
+          },
+          getDeveloperStats: function(shabatDate) {
+            var handler = this._onSuccess;
+            setTimeout(function() {
+              if (handler) {
+                handler({
+                  success: true,
+                  spreadsheetName: 'Pedidos de Cura - Shabat ' + (shabatDate || '12/09/2026'),
+                  totalNames: 32,
+                  totalSlides: 1,
+                  lastModified: new Date().toLocaleString('pt-BR'),
+                  spreadsheetUrl: '#'
+                });
+              }
+            }, 300);
+          },
+          regenerateSlidesForDev: function(shabatDate) {
+            var handler = this._onSuccess;
+            setTimeout(function() {
+              if (handler) {
+                handler({
+                  success: true,
+                  presentationId: 'dummy_id',
+                  presentationUrl: '#'
+                });
+              }
+            }, 500);
+          },
+          exportNamesAsJSON: function(shabatDate) {
+            var handler = this._onSuccess;
+            setTimeout(function() {
+              if (handler) {
+                handler({
+                  success: true,
+                  shabatDate: shabatDate || '12/09/2026',
+                  spreadsheetName: 'Pedidos de Cura',
+                  totalNomes: 2,
+                  nomes: [{ nome: 'Nome Demonstrativo 1' }, { nome: 'Nome Demonstrativo 2' }]
+                });
+              }
+            }, 300);
+          },
+          getProjectDocumentationHtml: function() {
+            var handler = this._onSuccess;
+            setTimeout(function() {
+              if (handler) {
+                handler('<html><body><h1>Documentação Carregada via Servidor</h1></body></html>');
+              }
+            }, 300);
+          }
+        }
+      }
+    };
+  }
+
   var nameCount = 0;
   var currentShabatDate = '';
   var isFormOpen = false;
+  var messageTimeout = null;
+  var devMessageTimeout = null;
   
-  document.addEventListener('DOMContentLoaded', function() {    
-    // === CARREGAMENTO DO FORMULÁRIO ===
+  document.addEventListener('DOMContentLoaded', function() {
+    // Garante container de visualização caso o arquivo seja aberto isoladamente no preview
+    if (!document.getElementById('formContainer') && !document.getElementById('namesContainer')) {
+      var previewWrapper = document.createElement('div');
+      previewWrapper.innerHTML = `
+        <div style="max-width:600px;margin:20px auto;font-family:sans-serif;padding:20px;border:1px solid #e0e0e0;border-radius:8px;">
+          <h2 style="color:#1a73e8;margin-top:0;">Pedidos de Cura - Shabat <span id="shabatDate">...</span></h2>
+          <div id="currentTime" style="color:#666;font-size:12px;margin-bottom:12px;"></div>
+          <div id="warningBox" style="display:none;background:#fff3cd;padding:10px;border-radius:4px;color:#856404;margin-bottom:12px;">
+            <p id="warningMessage" style="margin:0;"></p>
+          </div>
+          <div id="formContainer" style="display:none;">
+            <div id="namesContainer"></div>
+            <div style="margin-top:15px;display:flex;gap:10px;">
+              <button type="button" onclick="addNameField()" style="background:#28a745;color:white;border:none;padding:10px 16px;border-radius:4px;cursor:pointer;">(+) Adicionar Nome</button>
+              <button type="button" onclick="submitForm()" style="background:#1a73e8;color:white;border:none;padding:10px 16px;border-radius:4px;cursor:pointer;">Enviar</button>
+            </div>
+            <div id="message" style="margin-top:12px;"></div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(previewWrapper);
+    }
+
+    // === CARREGAMENTO DO FORMULÁRIO COM PROTEÇÃO CONTRA ELEMENTOS NULOS ===
     google.script.run
       .withSuccessHandler(function(status) {
         currentShabatDate = status.shabatDate;
         isFormOpen = status.isOpen;
-        document.getElementById('shabatDate').textContent = status.shabatDate;
-        document.getElementById('currentTime').textContent = status.currentTime;
+
+        var shabatElem = document.getElementById('shabatDate');
+        if (shabatElem) shabatElem.textContent = status.shabatDate;
+
+        var timeElem = document.getElementById('currentTime');
+        if (timeElem) timeElem.textContent = status.currentTime;
         
-        if (status.isDeveloper) {
-          document.getElementById('devButton').style.display = 'block';
+        var devBtn = document.getElementById('devButton');
+        if (devBtn && status.isDeveloper) {
+          devBtn.style.display = 'block';
         }
         
+        var warnBox = document.getElementById('warningBox');
+        var warnMsg = document.getElementById('warningMessage');
+        var formCont = document.getElementById('formContainer');
+
         if (status.showWarning) {
-          document.getElementById('warningMessage').textContent = status.message;
-          document.getElementById('warningBox').style.display = 'block';
-          document.getElementById('formContainer').style.display = 'none';
+          if (warnMsg) warnMsg.textContent = status.message;
+          if (warnBox) warnBox.style.display = 'block';
+          if (formCont) formCont.style.display = 'none';
         } else {
-          document.getElementById('warningBox').style.display = 'none';
-          document.getElementById('formContainer').style.display = 'block';
+          if (warnBox) warnBox.style.display = 'none';
+          if (formCont) formCont.style.display = 'block';
           for (var i = 0; i < 6; i++) addNameField();
         }
       })
       .withFailureHandler(function(error) {
         currentShabatDate = '05/09/2026';
-        document.getElementById('shabatDate').textContent = currentShabatDate;
-        document.getElementById('formContainer').style.display = 'block';
+        var shabatElem = document.getElementById('shabatDate');
+        if (shabatElem) shabatElem.textContent = currentShabatDate;
+
+        var formCont = document.getElementById('formContainer');
+        if (formCont) formCont.style.display = 'block';
+
         for (var i = 0; i < 6; i++) addNameField();
       })
       .checkFormStatus();
@@ -65,24 +200,27 @@
     if (fields.length > 1) {
       element.remove();
     } else {
-      alert('É necessário manter pelo menos um campo de nome.');
+      showMessage('É necessário manter pelo menos um campo de nome.', 'error', 6000);
     }
   }
   
   function clearForm() {
-    var inputs = document.querySelectorAll('.name-input');
-    inputs.forEach(function(input) { input.value = ''; });
-    var fields = document.querySelectorAll('.name-field');
-    while (fields.length > 6) {
-      fields[fields.length - 1].remove();
-      fields = document.querySelectorAll('.name-field');
+    var container = document.getElementById('namesContainer');
+    if (!container) return;
+    
+    // Reseta o container e o contador de nomes
+    container.innerHTML = '';
+    nameCount = 0;
+    
+    // Recria os 6 campos em branco do padrão inicial
+    for (var i = 0; i < 6; i++) {
+      addNameField();
     }
-    document.getElementById('results').style.display = 'none';
   }
   
   function submitForm() {
     if (!isFormOpen) {
-      showMessage('Formulário está fechado no momento.', 'error');
+      showMessage('Formulário está fechado no momento.', 'error', 10000);
       return;
     }
     var inputs = document.querySelectorAll('.name-input');
@@ -91,38 +229,76 @@
       if (input.value.trim() !== '') names.push(input.value.trim());
     });
     if (names.length === 0) {
-      showMessage('Por favor, preencha pelo menos um nome.', 'error');
+      showMessage('Por favor, preencha pelo menos um nome.', 'error', 10000);
       return;
     }
+    
     showMessage('Processando...', 'info');
+    
     google.script.run
       .withSuccessHandler(function(response) {
         if (response.success) {
-          showMessage(response.spreadsheet.message, 'success');
-          document.getElementById('spreadsheetLink').href = response.spreadsheet.spreadsheetUrl;
-          document.getElementById('presentationLink').href = response.presentation.presentationUrl;
-          document.getElementById('results').style.display = 'block';
-          setTimeout(function() { clearForm(); }, 2000);
+          // Monta mensagens amigáveis com quebra de linha quando houver novos e duplicados
+          var newCount = response.spreadsheet.newNames || 0;
+          var dupCount = response.spreadsheet.duplicates || 0;
+          var finalMsg = '';
+          var msgType = 'success';
+
+          if (newCount > 0 && dupCount > 0) {
+            // Caso misto: nomes novos adicionados e duplicados ignorados
+            finalMsg = '• ' + newCount + ' nome(s) adicionado(s) com sucesso!<br>• Houve(ram) ' + dupCount + ' duplicado(s) que já está gravado.';
+            msgType = 'success';
+          } else if (newCount > 0 && dupCount === 0) {
+            // Apenas novos nomes
+            finalMsg = '• ' + newCount + ' nome(s) adicionado(s) com sucesso!';
+            msgType = 'success';
+          } else if (newCount === 0 && dupCount > 0) {
+            // Apenas duplicados
+            finalMsg = '• Nenhum nome novo adicionado.<br>• Houve(ram) ' + dupCount + ' duplicado(s) que já está gravado.';
+            msgType = 'info';
+          } else {
+            finalMsg = response.spreadsheet.message || 'Pedidos processados com sucesso!';
+          }
+
+          // Exibe a mensagem por 15 segundos
+          showMessage(finalMsg, msgType, 15000);
+          
+          // Limpa os campos para nova digitação
+          clearForm();
         } else {
-          showMessage('Erro: ' + response.error, 'error');
+          showMessage('Erro: ' + response.error, 'error', 12000);
         }
       })
       .withFailureHandler(function(error) {
-        showMessage('Erro ao processar: ' + error.message, 'error');
+        showMessage('Erro ao processar: ' + error.message, 'error', 12000);
       })
       .processForm(names, currentShabatDate);
   }
   
-  function showMessage(text, type) {
+  function showMessage(text, type, customDuration) {
     var messageDiv = document.getElementById('message');
-    if (messageDiv) {
-      messageDiv.textContent = text;
-      messageDiv.className = 'message ' + type;
-      setTimeout(function() {
-        messageDiv.textContent = '';
-        messageDiv.className = 'message';
-      }, 5000);
+    if (!messageDiv) return;
+
+    // Cancela qualquer timer anterior para não apagar a nova mensagem antes da hora
+    if (messageTimeout) {
+      clearTimeout(messageTimeout);
+      messageTimeout = null;
     }
+
+    // Suporta quebras de linha e tags HTML para mensagens duplas
+    messageDiv.innerHTML = text;
+    messageDiv.className = 'message ' + type;
+
+    // Mensagens de "Processando..." não se fecham sozinhas; aguardam o retorno do servidor
+    if (type === 'info' && text === 'Processando...') return;
+
+    // Duração padrão estendida: 12 segundos (ou customDuration se fornecido)
+    var duration = customDuration || 12000;
+    
+    messageTimeout = setTimeout(function() {
+      messageDiv.innerHTML = '';
+      messageDiv.className = 'message';
+    }, duration);
   }
 
   function toggleDevPanel() {
@@ -165,13 +341,13 @@
       .withSuccessHandler(function(stats) {
         if (stats && stats.success) {
           window.open(stats.spreadsheetUrl, '_blank');
-          showDevMessage('Planilha aberta! Use Arquivo → Download → Excel', 'success');
+          showDevMessage('Planilha aberta! Use Arquivo → Download → Excel', 'success', 10000);
         } else {
-          showDevMessage('Erro: ' + (stats ? stats.error : 'Resposta nula'), 'error');
+          showDevMessage('Erro: ' + (stats ? stats.error : 'Resposta nula'), 'error', 10000);
         }
       })
       .withFailureHandler(function(error) {
-        showDevMessage('Erro: ' + error.message, 'error');
+        showDevMessage('Erro: ' + error.message, 'error', 10000);
       })
       .getDeveloperStats(currentShabatDate);
   }
@@ -189,14 +365,17 @@
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
-          document.getElementById('presentationLink').href = response.presentationUrl;
-          showDevMessage('✅ Slides gerados e PPTX baixado!', 'success');
+
+          var presLink = document.getElementById('presentationLink');
+          if (presLink) presLink.href = response.presentationUrl;
+
+          showDevMessage('✅ Slides gerados e PPTX baixado!', 'success', 12000);
         } else {
-          showDevMessage('❌ Erro: ' + response.error, 'error');
+          showDevMessage('❌ Erro: ' + response.error, 'error', 12000);
         }
       })
       .withFailureHandler(function(error) {
-        showDevMessage('❌ Erro de conexão: ' + error.message, 'error');
+        showDevMessage('❌ Erro de conexão: ' + error.message, 'error', 12000);
       })
       .regenerateSlidesForDev(currentShabatDate);
   }
@@ -206,7 +385,7 @@
     google.script.run
       .withSuccessHandler(function(data) {
         if (data.success === false) {
-          showDevMessage('Erro: ' + data.error, 'error');
+          showDevMessage('Erro: ' + data.error, 'error', 12000);
           return;
         }
         var jsonStr = JSON.stringify(data, null, 2);
@@ -217,21 +396,34 @@
         a.download = 'pedidos_' + (data.spreadsheetName || 'cura').replace(/[^a-z0-9]/gi, '_') + '.json';
         a.click();
         URL.revokeObjectURL(url);
-        showDevMessage('Exportado! ' + data.totalNomes + ' nomes', 'success');
+        showDevMessage('Exportado! ' + data.totalNomes + ' nomes', 'success', 10000);
       })
       .withFailureHandler(function(error) {
-        showDevMessage('Erro: ' + error.message, 'error');
+        showDevMessage('Erro: ' + error.message, 'error', 12000);
       })
       .exportNamesAsJSON(currentShabatDate);
   }
 
-  function showDevMessage(text, type) {
+  function showDevMessage(text, type, customDuration) {
     var msgDiv = document.getElementById('devMessage');
+    if (!msgDiv) return;
+
+    if (devMessageTimeout) {
+      clearTimeout(devMessageTimeout);
+      devMessageTimeout = null;
+    }
+
     msgDiv.textContent = text;
     msgDiv.style.display = 'block';
     msgDiv.style.background = type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1';
     msgDiv.style.color = type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460';
-    setTimeout(function() { msgDiv.style.display = 'none'; }, 5000);
+    
+    if (type === 'info') return;
+
+    var duration = customDuration || 10000;
+    devMessageTimeout = setTimeout(function() { 
+      msgDiv.style.display = 'none'; 
+    }, duration);
   }
 
   function generateDocx() {
@@ -239,7 +431,7 @@
     google.script.run
       .withSuccessHandler(function(data) {
         if (data.success === false) {
-          showDevMessage('Erro: ' + data.error, 'error');
+          showDevMessage('Erro: ' + data.error, 'error', 12000);
           return;
         }
         var html = generateWordHtml(data);
@@ -250,17 +442,17 @@
         a.download = 'Pedidos_de_Cura_Shabat_' + currentShabatDate.replace(/\//g, '-') + '.doc';
         a.click();
         URL.revokeObjectURL(url);
-        showDevMessage('✅ Documento Word gerado! ' + data.totalNomes + ' nomes', 'success');
+        showDevMessage('✅ Documento Word gerado! ' + data.totalNomes + ' nomes', 'success', 12000);
       })
       .withFailureHandler(function(error) {
-        showDevMessage('Erro: ' + error.message, 'error');
+        showDevMessage('Erro: ' + error.message, 'error', 12000);
       })
       .exportNamesAsJSON(currentShabatDate);
   }
 
   function generateWordHtml(data) {
     var nomes = data.nomes;
-    var shabatDate = data.shabatDate;
+    var shabatDate = data.shabatDate || currentShabatDate || '';
     var nomesPorPagina = 128;
     var nomesPorColuna = 32;
     var numColunas = 4;
@@ -294,35 +486,27 @@
   }
 
   function generateProjectDoc() {
-    showDevMessage('Gerando documentação do projeto...', 'info');
-    var html = generateProjectDocumentationHtml();
-    var blob = new Blob(['\ufeff', html], { type: 'application/msword' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'Projeto_Pedidos_de_Cura_Documentacao.doc';
-    a.click();
-    URL.revokeObjectURL(url);
-    showDevMessage('✅ Documentação gerada com sucesso!', 'success');
-  }
-
-  function generateProjectDocumentationHtml() {
-    var currentDate = new Date().toLocaleString('pt-BR');
-    return `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head><meta charset='utf-8'><title>Documentação do Projeto</title>
-    <style>@page { size: A4; margin: 2.5cm; } body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #333; } h1 { font-size: 20pt; color: #1a73e8; text-align: center; border-bottom: 3px solid #1a73e8; padding-bottom: 10pt; margin-bottom: 30pt; } h2 { font-size: 16pt; color: #2c6aa8; border-left: 5px solid #2c6aa8; padding-left: 10pt; margin-top: 30pt; margin-bottom: 15pt; background-color: #f0f7ff; padding: 8pt; } table { width: 100%; border-collapse: collapse; margin: 15pt 0; font-size: 10pt; } th { background-color: #1a73e8; color: white; padding: 8pt; text-align: left; border: 1px solid #0d5a9e; } td { padding: 6pt; border: 1px solid #ddd; vertical-align: top; } tr:nth-child(even) { background-color: #f9f9f9; } .status-ok { color: #28a745; font-weight: bold; } .section { margin-bottom: 30pt; page-break-inside: avoid; } .header-info { background-color: #e8f4fc; padding: 15pt; border-radius: 5pt; margin-bottom: 30pt; border-left: 5px solid #1a73e8; } .footer { margin-top: 50pt; text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #ddd; padding-top: 10pt; } ul { margin: 10pt 0; padding-left: 20pt; } li { margin: 5pt 0; } .highlight { background-color: #fff3cd; padding: 2pt 5pt; border-radius: 3pt; }</style></head>
-    <body><h1>📋 DOCUMENTAÇÃO DO PROJETO<br>Pedidos de Cura - Shabat</h1>
-    <div class="header-info"><strong>Data:</strong> ${currentDate}<br><strong>Versão:</strong> 1.0<br><strong>Status:</strong> <span class="status-ok">✅ EM PRODUÇÃO</span></div>
-    <div class="section"><h2>1. FORMULÁRIO PRINCIPAL</h2><table><tr><th style="width:5%">#</th><th style="width:85%">Funcionalidade</th><th style="width:10%">Status</th></tr>
-    <tr><td>1.1</td><td>Título dinâmico e data/hora atual</td><td class="status-ok">✅</td></tr>
-    <tr><td>1.2</td><td>Campos dinâmicos de nome (+ / -)</td><td class="status-ok">✅</td></tr>
-    <tr><td>1.3</td><td>Botão Enviar processa e salva</td><td class="status-ok">✅</td></tr></table></div>
-    <div class="section"><h2>2. PLANILHA GOOGLE SHEETS</h2><table><tr><th style="width:5%">#</th><th style="width:85%">Funcionalidade</th><th style="width:10%">Status</th></tr>
-    <tr><td>2.1</td><td>Criação automática e abas organizadas</td><td class="status-ok">✅</td></tr>
-    <tr><td>2.2</td><td>32 nomes por coluna, acrescenta sem apagar</td><td class="status-ok">✅</td></tr></table></div>
-    <div class="section"><h2>3. PAINEL DEV</h2><table><tr><th style="width:5%">#</th><th style="width:85%">Funcionalidade</th><th style="width:10%">Status</th></tr>
-    <tr><td>3.1</td><td>Acesso restrito por e-mail</td><td class="status-ok">✅</td></tr>
-    <tr><td>3.2</td><td>Download XLSX, JSON, Slides .pptx e Word .doc</td><td class="status-ok">✅</td></tr></table></div>
-    <div class="footer"><strong>Projeto: Pedidos de Cura - Shabat</strong><br>Desenvolvido com Google Apps Script<br>Status: <span class="highlight">EM PRODUÇÃO</span></div></body></html>`;
+    showDevMessage('Buscando documentação do projeto...', 'info');
+    google.script.run
+      .withSuccessHandler(function(html) {
+        if (!html) {
+          showDevMessage('Erro: arquivo de documentação não encontrado no servidor.', 'error', 12000);
+          return;
+        }
+        var blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'Documentacao_Pedidos_de_Cura_V1.4.doc';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showDevMessage('✅ Documentação Word baixada com sucesso!', 'success', 10000);
+      })
+      .withFailureHandler(function(error) {
+        showDevMessage('Erro ao obter documentação: ' + error.message, 'error', 12000);
+      })
+      .getProjectDocumentationHtml();
   }
 </script>
