@@ -1,0 +1,395 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+  <meta charset='utf-8'>
+  <title>Documentação do Projeto - Pedidos de Cura V.1.4</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    @page { 
+      size: A4; 
+      margin: 2.5cm 2.0cm 2.5cm 2.0cm; 
+    }
+    body { 
+      font-family: 'Calibri', 'Arial', sans-serif; 
+      font-size: 11pt; 
+      line-height: 1.45; 
+      color: #2b2b2b; 
+    }
+    h1 { 
+      font-size: 22pt; 
+      color: #1a73e8; 
+      text-align: center; 
+      border-bottom: 3px solid #1a73e8; 
+      padding-bottom: 8pt; 
+      margin-top: 0;
+      margin-bottom: 20pt; 
+      text-transform: uppercase;
+      letter-spacing: 0.5pt;
+    }
+    h2 { 
+      font-size: 14pt; 
+      color: #1557b0; 
+      border-left: 5px solid #1a73e8; 
+      padding-left: 10pt; 
+      margin-top: 25pt; 
+      margin-bottom: 12pt; 
+      background-color: #f0f6ff; 
+      padding-top: 6pt;
+      padding-bottom: 6pt;
+    }
+    .header-box { 
+      background-color: #f8fafd; 
+      border: 1px solid #d2e3fc;
+      border-left: 6px solid #1a73e8; 
+      padding: 14pt; 
+      border-radius: 4pt; 
+      margin-bottom: 25pt; 
+    }
+    .header-box table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0;
+    }
+    .header-box td {
+      padding: 4pt 8pt;
+      border: none;
+      font-size: 10.5pt;
+    }
+    table.data-table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin: 12pt 0 20pt 0; 
+      font-size: 10pt; 
+    }
+    table.data-table th { 
+      background-color: #1a73e8; 
+      color: #ffffff; 
+      padding: 8pt; 
+      text-align: left; 
+      border: 1px solid #1765c6; 
+      font-weight: bold;
+    }
+    table.data-table td { 
+      padding: 7pt 8pt; 
+      border: 1px solid #dcdcdc; 
+      vertical-align: middle; 
+    }
+    table.data-table tr:nth-child(even) { 
+      background-color: #fbfcfd; 
+    }
+    .status-ok { 
+      color: #1e7e34; 
+      font-weight: bold; 
+      text-align: center;
+      display: block;
+    }
+    .badge {
+      background-color: #28a745;
+      color: white;
+      padding: 2pt 6pt;
+      border-radius: 3pt;
+      font-size: 9pt;
+      font-weight: bold;
+    }
+    .footer { 
+      margin-top: 40pt; 
+      text-align: center; 
+      font-size: 9pt; 
+      color: #666666; 
+      border-top: 1px solid #dcdcdc; 
+      padding-top: 12pt; 
+    }
+    .note-box {
+      background-color: #fff9e6;
+      border-left: 4px solid #ffc107;
+      padding: 10pt 12pt;
+      margin: 12pt 0;
+      font-size: 10pt;
+      color: #73510d;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📋 DOCUMENTAÇÃO DO PROJETO<br><span style="font-size: 15pt; color: #555;">Pedidos de Cura - Shabat</span></h1>
+
+  <div class="header-box">
+    <table>
+      <tr>
+        <td style="width: 20%;"><strong>Data / Hora:</strong></td>
+        <td style="width: 30%;">11/09/2026, 08:40:47</td>
+        <td style="width: 20%;"><strong>Versão Atual:</strong></td>
+        <td style="width: 30%;"><strong>V.1.4</strong> (Evolução da 1.0)</td>
+      </tr>
+      <tr>
+        <td><strong>Status do Sistema:</strong></td>
+        <td><span class="badge">✅ EM PRODUÇÃO</span></td>
+        <td><strong>Ambiente:</strong></td>
+        <td>Google Apps Script (Web App)</td>
+      </tr>
+      <tr>
+        <td><strong>Instituição:</strong></td>
+        <td colspan="3">Ponto de Estudos da Torah - SP Capital (Brasil e Mundo)</td>
+      </tr>
+    </table>
+  </div>
+
+  <h2>1. FORMULÁRIO PRINCIPAL (WEB APP)</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 8%; text-align: center;">#</th>
+        <th style="width: 52%;">Funcionalidade</th>
+        <th style="width: 25%;">Regra de Negócio / Comportamento</th>
+        <th style="width: 15%; text-align: center;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: center;"><strong>1.1</strong></td>
+        <td>Título dinâmico e data/hora atual</td>
+        <td>Calcula dinamicamente a data do próximo Shabat (sábado) e exibe o horário de Brasília.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>1.2</strong></td>
+        <td>Campos dinâmicos de nome (+ / -)</td>
+        <td>Permite ao usuário adicionar novos campos ou remover individualmente (mínimo mantido: 1 campo).</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>1.3</strong></td>
+        <td>Grid inicial com 6 campos</td>
+        <td>Carrega previamente 6 campos em branco prontos para digitação rápida.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>1.4</strong></td>
+        <td>Limpeza automática da tela pós-envio</td>
+        <td>Ao concluir o envio com sucesso, reseta os inputs e recria os 6 campos em branco sem recarregar a página.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>1.5</strong></td>
+        <td>Mensagens amigáveis duplas (Novos e Duplicados)</td>
+        <td>Informa detalhadamente em tópicos: "X nome(s) adicionado(s) com sucesso!" e "Houve(ram) Y duplicado(s) que já está gravado."</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>1.6</strong></td>
+        <td>Tempo de exibição estendido das mensagens</td>
+        <td>Notificações de sucesso permanecem visíveis por 15 segundos; alertas e erros por 12 segundos.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>1.7</strong></td>
+        <td>Responsividade Mobile Total (iPhone e Android)</td>
+        <td>Ajuste de Viewport nativo no doGet, ocupando 100% da tela sem margens verticais excessivas.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>1.8</strong></td>
+        <td>Ocultação de links sensíveis ao usuário comum</td>
+        <td>Links diretos da Planilha e Apresentação ficam ocultos do público final e restritos ao DEV.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2. PLANILHA GOOGLE SHEETS (BANCO DE DADOS)</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 8%; text-align: center;">#</th>
+        <th style="width: 52%;">Funcionalidade</th>
+        <th style="width: 25%;">Regra de Negócio / Comportamento</th>
+        <th style="width: 15%; text-align: center;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: center;"><strong>2.1</strong></td>
+        <td>Criação e localização automática</td>
+        <td>Localiza a planilha semanal pelo nome ou cria automaticamente com a aba "Pedidos".</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>2.2</strong></td>
+        <td>Distribuição colunada (32 nomes por coluna)</td>
+        <td>Preenchimento da linha 2 à 33. Ao atingir o limite, avança sequencialmente para a coluna seguinte (A a H+).</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>2.3</strong></td>
+        <td>Normalização e antifalha de duplicidades</td>
+        <td>Normaliza acentos, espaços extras e ignora partículas ("de", "da", "dos") para não repetir pedidos.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>2.4</strong></td>
+        <td>Persistência acumulativa</td>
+        <td>Novos envios são sempre anexados na primeira célula disponível, sem apagar registros anteriores.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3. APRESENTAÇÃO DE SLIDES (GOOGLE SLIDES / PPTX)</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 8%; text-align: center;">#</th>
+        <th style="width: 52%;">Funcionalidade</th>
+        <th style="width: 25%;">Regra de Negócio / Comportamento</th>
+        <th style="width: 15%; text-align: center;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: center;"><strong>3.1</strong></td>
+        <td>Otimização de densidade para PowerPoint</td>
+        <td>Distribuição calibrada em 4 colunas com no máximo 25 nomes cada (limite de 100 nomes por slide).</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>3.2</strong></td>
+        <td>Design e identidade visual</td>
+        <td>Fundo temático azul (#4A90E2), faixas laterais decorativas, card central e tipografia Trebuchet MS 9pt.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>3.3</strong></td>
+        <td>Rodapé institucional oficial</td>
+        <td>Inclusão da dedicatória no último slide: <em>"...e o Ponto de Estudos da Torah no Brasil e no Mundo."</em></td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>3.4</strong></td>
+        <td>Exportação direta em formato .pptx</td>
+        <td>Download acionado diretamente pelo Painel DEV via endpoint do Google Drive.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. EXPORTAÇÕES E DOCUMENTOS AUXILIARES</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 8%; text-align: center;">#</th>
+        <th style="width: 52%;">Funcionalidade</th>
+        <th style="width: 25%;">Regra de Negócio / Comportamento</th>
+        <th style="width: 15%; text-align: center;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: center;"><strong>4.1</strong></td>
+        <td>Exportação de Documento Word (.doc)</td>
+        <td>Layout em folha A4 Paisagem, 4 colunas de 32 linhas (128 nomes por página) e data do Shabat dinâmica.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>4.2</strong></td>
+        <td>Exportação estruturada em JSON</td>
+        <td>Arquivo .json contendo o inventário completo dos pedidos, ordenação de coluna e linha correspondente.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>4.3</strong></td>
+        <td>Massa de Testes (256 Nomes Únicos)</td>
+        <td>Estrutura auxiliar em HTML/TSV e script de carga automatizada para validação de limites colunados.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>5. PAINEL DO DESENVOLVEDOR (PORTAL DEV)</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 8%; text-align: center;">#</th>
+        <th style="width: 52%;">Funcionalidade</th>
+        <th style="width: 25%;">Regra de Negócio / Comportamento</th>
+        <th style="width: 15%; text-align: center;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: center;"><strong>5.1</strong></td>
+        <td>Acesso por Whitelist de E-mail</td>
+        <td>Botão flutuante exibido exclusivamente para contas de e-mail autorizadas na função checkDeveloperAccess.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>5.2</strong></td>
+        <td>Métricas em tempo real</td>
+        <td>Exibe contagem total de nomes cadastrados, estimativa de slides gerados e data/hora da última alteração.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>5.3</strong></td>
+        <td>Central de Ações e Downloads</td>
+        <td>Botoeira para download de XLSX, JSON, Slides PPTX, Word (.doc) e emissão de documentação do projeto.</td>
+        <td><span class="status-ok">✅ Conforme</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>6. HISTÓRICO DE VERSÕES (CHANGELOG)</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 15%;">Versão</th>
+        <th style="width: 20%;">Data</th>
+        <th style="width: 65%;">Alterações Implementadas</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Versão 1.0</strong></td>
+        <td>Agosto/2026</td>
+        <td>Lançamento inicial com formulário web, gravação no Google Sheets e geração de slides básica.</td>
+      </tr>
+      <tr>
+        <td><strong>Versão 1.1</strong></td>
+        <td>Setembro/2026</td>
+        <td>Otimização do layout de slides para PowerPoint (25 nomes/coluna) e exportação em Word (.doc).</td>
+      </tr>
+      <tr>
+        <td><strong>Versão 1.2</strong></td>
+        <td>Setembro/2026</td>
+        <td>Adição do Viewport nativo no doGet para preenchimento total em iPhone e Android; correção do parâmetro shabatDate no Word.</td>
+      </tr>
+      <tr>
+        <td><strong>Versão 1.3</strong></td>
+        <td>Setembro/2026</td>
+        <td>Limpeza automática do formulário pós-envio e ocultação dos links da planilha para o usuário comum.</td>
+      </tr>
+      <tr>
+        <td><strong>Versão 1.4</strong></td>
+        <td>11/09/2026</td>
+        <td>Mensagens duplas amigáveis com quebra de linha (novos + duplicados), tempo de exibição estendido para 15 segundos e tratamento defensivo do DOM.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note-box">
+    <strong>Declaração de Conformidade:</strong> Todos os módulos de interface, manipulação de dados, segurança de sessão e geração de documentos foram testados e validados para a execução do próximo Shabat.
+  </div>
+
+  <div class="footer">
+    <strong>Projeto: Pedidos de Cura - Shabat</strong><br>
+    Desenvolvido com Google Apps Script & Google Workspace APIs<br>
+    <em>Documentação oficial atualizada em 11/09/2026, 08:40:47 • Versão V.1.4</em>
+  </div>
+
+</body>
+</html>
