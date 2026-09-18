@@ -5,7 +5,7 @@
 ✅ Botão "Enviar" salva na planilha e gera apresentação
 ✅ Formulário permanece na tela para ajustes
 ✅ Gera Google Slides com layout em 4 colunas
-✅ Último slide contém o texto "...e o Ponto de Estudos da Torah no Brasil e no Mundo."
+✅ Último slide contém o texto "...e os Pontos de Estudos da Torah no Brasil e no Mundo."
 ✅ Sem travamentos mesmo com muitos nomes
 ✅ Links da planilha e apresentação exibidos após envio*/
 // listaCurags.gs
@@ -295,7 +295,7 @@ function createSlidesPresentation(names, shabatDate) {
         footer.getFill().setTransparent();
         footer.getBorder().setTransparent();
         var footerText = footer.getText();
-        footerText.setText('...e o Ponto de Estudos da Torah no Brasil e no Mundo.');
+        footerText.setText('...e os Pontos de Estudos da Torah no Brasil e no Mundo.');
         footerText.getTextStyle().setFontSize(8).setItalic(true).setForegroundColor('#666666').setFontFamily('Trebuchet MS');
         footerText.getParagraphStyle().setParagraphAlignment(SlidesApp.ParagraphAlignment.START);
       }
